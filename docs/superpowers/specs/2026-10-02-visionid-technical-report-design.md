@@ -11,7 +11,7 @@ Produce a polished, technically accurate LaTeX report and compiled PDF titled **
 ## Source and output
 
 - LaTeX source, bibliography, TikZ diagrams, and any report assets live under `docs/report/`.
-- Final output is `docs/VisionID_AI_Technical_Report.pdf`.
+- Final output is `output/pdf/VisionID_AI_Technical_Report.pdf`.
 - Build with Tectonic/XeTeX-compatible LaTeX using reproducible font and package choices. A Windows script checks for Tectonic and provides an exact install/build command when absent.
 - Before the first PDF authoring command, run the PDF skill's required `mark_artifact_operation_started.mjs` command exactly once. Render the completed PDF to page PNGs with Poppler, inspect representative pages and all detected layout issues, revise, and re-render before delivery.
 
