@@ -28,7 +28,7 @@
 - A camera removed while a frame is being processed must stop new inference, release tracks, and show a recoverable status; pin with Task 4 camera tests.
 - Two enrolled identities with close scores must resolve to Unknown rather than selecting a weak winner; pin with Task 5 matcher tests.
 - Unicode payload byte limits, malformed QR fields, and duplicate IDs must be validated before persistence; pin with Task 3 parser and UI tests.
-- A deleted profile must not regain linked events/templates from a stale in-flight result, clear-all must stop inference first, and clearing model cache must preserve personal data; pin with Tasks 7–8 integration tests.
+- A deleted profile must not regain linked events/templates from a stale in-flight result, clear-all must stop inference first, and clearing model cache must preserve personal data; pin with Tasks 7â€“8 integration tests.
 
 ---
 
@@ -38,12 +38,12 @@
 
 **Interfaces:** Export appRouter from src/app/router.tsx with the routes in the approved spec. AppShell renders navigation, main landmark, route outlet, title, theme, and toast region. RouteErrorBoundary presents a recoverable error with reset navigation.
 
-- [ ] Step 1: Bootstrap package.json/package-lock.json with pinned React, Vite, TypeScript, Vitest, Testing Library, Playwright, Tailwind Vite plugin, and lint dependencies; add scripts named dev, build, preview, test (Vitest run), lint, typecheck, and test:e2e. Configure only the minimum Vite/test setup needed to run tests.
-- [ ] Step 2: Write rendersRequiredRoutes and unknownRouteShowsAccessibleNotFound tests. Assert a named main landmark, all eight route headings, and a home link on an unknown route.
-- [ ] Step 3: Run npm test -- --run tests/ui/navigation/router.test.tsx. Expected: FAIL because appRouter and route pages do not exist.
-- [ ] Step 4: Create strict TypeScript config, ESLint, Tailwind Vite integration, app shell/router, route shells, error boundary, responsive navigation, focus states, reduced motion, theme tokens, not-found page, Vercel SPA rewrite, and static asset cache rules.
-- [ ] Step 5: Run npm test -- --run tests/ui/navigation/router.test.tsx, npm run typecheck, npm run lint, and npm run build. Expected: PASS with all named routes resolving and production assets building.
-- [ ] Step 6: Commit Task 1 files as feat: scaffold VisionID browser application.
+- [x] Step 1: Bootstrap package.json/package-lock.json with pinned React, Vite, TypeScript, Vitest, Testing Library, Playwright, Tailwind Vite plugin, and lint dependencies; add scripts named dev, build, preview, test (Vitest run), lint, typecheck, and test:e2e. Configure only the minimum Vite/test setup needed to run tests.
+- [x] Step 2: Write rendersRequiredRoutes and unknownRouteShowsAccessibleNotFound tests. Assert a named main landmark, all eight route headings, and a home link on an unknown route.
+- [x] Step 3: Run npm test -- --run tests/ui/navigation/router.test.tsx. Expected: FAIL because appRouter and route pages do not exist.
+- [x] Step 4: Create strict TypeScript config, ESLint, Tailwind Vite integration, app shell/router, route shells, error boundary, responsive navigation, focus states, reduced motion, theme tokens, not-found page, Vercel SPA rewrite, and static asset cache rules.
+- [x] Step 5: Run npm test -- --run tests/ui/navigation/router.test.tsx, npm run typecheck, npm run lint, and npm run build. Expected: PASS with all named routes resolving and production assets building.
+- [x] Step 6: Commit Task 1 files as feat: scaffold VisionID browser application.
 
 ### Task 2: Define domain contracts and local repositories
 
@@ -100,7 +100,7 @@
 
 **Files:** Create src/features/enrollment/EnrollmentPage.tsx, src/features/enrollment/EnrollmentFlow.tsx, src/features/enrollment/ManualProfileForm.tsx, src/features/enrollment/SampleCapture.tsx, src/features/enrollment/FaceQualityPanel.tsx, src/features/people/PeopleDirectoryPage.tsx, src/features/people/PeopleDirectory.tsx, src/features/people/PersonProfilePage.tsx, src/features/people/ProfileEditor.tsx, tests/integration/enrollment/enrollmentFlow.test.tsx, tests/ui/enrollment/EnrollmentPage.test.tsx, and tests/ui/people/PeopleDirectory.test.tsx.
 
-**Interfaces:** EnrollmentFlow accepts an optional ValidatedPersonPayload and requires explicit consent before starting camera recognition. It saves 3–5 quality-approved descriptors from one primary face through the VisionEngine and template repository; source frames are discarded. PeopleDirectory reads profiles/events through repositories and exposes search/filter/sort/select. PersonProfilePage is keyed by personId and shows profile, enrollment state, and linked event history.
+**Interfaces:** EnrollmentFlow accepts an optional ValidatedPersonPayload and requires explicit consent before starting camera recognition. It saves 3â€“5 quality-approved descriptors from one primary face through the VisionEngine and template repository; source frames are discarded. PeopleDirectory reads profiles/events through repositories and exposes search/filter/sort/select. PersonProfilePage is keyed by personId and shows profile, enrollment state, and linked event history.
 
 - [ ] Step 1: Write qrPreviewRequiresExplicitSave, consentPrecedesCapture, rejectsPoorSampleAndOffersRetry, storesOnlyQualityApprovedDescriptors, cancellationReleasesCamera, reEnrollmentRequiresConfirmation, editingUpdatesProfile, and deletingProfileRemovesTemplatesAndEvents tests.
 - [ ] Step 2: Run npm test -- --run tests/integration/enrollment tests/ui/enrollment tests/ui/people. Expected: FAIL because enrollment and people flows are absent.

@@ -1,0 +1,36 @@
+# Dependencies and builds
+node_modules/
+dist/
+coverage/
+.vite/
+
+# Local configuration and user data
+.env
+.env.*
+!.env.example
+*.sqlite
+*.db
+*.idb
+*.indexeddb
+private-data/
+private-portraits/
+
+# Test output
+playwright-report/
+test-results/
+*.log
+
+# Workspaces and generated documentation files
+.worktrees/
+.superpowers/sdd/
+output/pdf/rendered/
+output/pdf/*.aux
+output/pdf/*.log
+output/pdf/*.out
+output/pdf/*.toc
+output/pdf/*.fls
+output/pdf/*.fdb_latexmk
+output/pdf/*.bbl
+output/pdf/*.bcf
+output/pdf/*.run.xml
+output/pdf/*.synctex.gz
