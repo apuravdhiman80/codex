@@ -28,7 +28,7 @@
 - A camera removed while a frame is being processed must stop new inference, release tracks, and show a recoverable status; pin with Task 4 camera tests.
 - Two enrolled identities with close scores must resolve to Unknown rather than selecting a weak winner; pin with Task 5 matcher tests.
 - Unicode payload byte limits, malformed QR fields, and duplicate IDs must be validated before persistence; pin with Task 3 parser and UI tests.
-- A deleted profile must not regain linked events/templates from a stale in-flight result, clear-all must stop inference first, and clearing model cache must preserve personal data; pin with Tasks 7â€“8 integration tests.
+- A deleted profile must not regain linked events/templates from a stale in-flight result, clear-all must stop inference first, and clearing model cache must preserve personal data; pin with Tasks 7Ã¢â‚¬â€œ8 integration tests.
 
 ---
 
@@ -51,11 +51,11 @@
 
 **Interfaces:** PersonProfile has id, personId, name, role, department, email, phone, organization, metadata, photoBlob, createdAt, updatedAt, lastDetectedAt, consentRecordedAt, and isDemo. FaceTemplate has id, personId, Float32Array descriptor, quality, pose, createdAt, modelId, and isDemo. BoundingBox is { x, y, width, height }. FaceResult is { box, detectorConfidence, landmarks?, descriptor? }. ObjectResult is { box, className, modelClassId, detectorConfidence }. DetectionEvent has id, timestamp, type, label, personId, trackId, detectorConfidence, recognitionSimilarity, boundingBox, mode, and isDemo. VisionSettings has objectThreshold, recognitionThreshold, unknownMatchMargin, maxEnrollmentSamples, faceQuality, maxInputWidth, maxInputHeight, inferenceIntervalMs, trackExpiryMs, cameraId, cameraFacingMode, modelVariant, overlay flags, theme, and eventRetentionDays. Repositories export createProfile, getProfile, updateProfile, deleteProfileCascade, listProfiles, saveTemplates, listTemplatesForPerson, addEvents, queryEvents, getSettings, and saveSettings with typed async results.
 
-- [ ] Step 1: Write tests named clampsThresholdsAndRejectsInvalidSettings, migratesLegacySettings, rejectsMalformedDescriptors, deleteProfileCascadeRemovesLinkedRows, and reportsIndexedDbOpenFailure. Assert the exact initial values from the approved spec and deletion of all linked rows in one transaction.
-- [ ] Step 2: Run npm test -- --run tests/unit/config/settings.test.ts tests/unit/data/schema.test.ts tests/integration/repositories/repositories.test.ts. Expected: FAIL because types, database, and repositories are absent.
-- [ ] Step 3: Implement the domain types and Dexie v1 schema/migrations. Validate all persisted settings, profile IDs, metadata sizes, descriptor model IDs/lengths, and event score semantics. Add transactional cascade deletion and structured IndexedDB/quota errors.
-- [ ] Step 4: Run npm test -- --run tests/unit/config/settings.test.ts tests/unit/data/schema.test.ts tests/integration/repositories/repositories.test.ts, npm run typecheck, and npm run lint. Expected: PASS, including fake IndexedDB migration and transactional repository checks.
-- [ ] Step 5: Commit Task 2 files as feat: add typed local data layer.
+- [x] Step 1: Write tests named clampsThresholdsAndRejectsInvalidSettings, migratesLegacySettings, rejectsMalformedDescriptors, deleteProfileCascadeRemovesLinkedRows, and reportsIndexedDbOpenFailure. Assert the exact initial values from the approved spec and deletion of all linked rows in one transaction.
+- [x] Step 2: Run npm test -- --run tests/unit/config/settings.test.ts tests/unit/data/schema.test.ts tests/integration/repositories/repositories.test.ts. Expected: FAIL because types, database, and repositories are absent.
+- [x] Step 3: Implement the domain types and Dexie v1 schema/migrations. Validate all persisted settings, profile IDs, metadata sizes, descriptor model IDs/lengths, and event score semantics. Add transactional cascade deletion and structured IndexedDB/quota errors.
+- [x] Step 4: Run npm test -- --run tests/unit/config/settings.test.ts tests/unit/data/schema.test.ts tests/integration/repositories/repositories.test.ts, npm run typecheck, and npm run lint. Expected: PASS, including fake IndexedDB migration and transactional repository checks.
+- [x] Step 5: Commit Task 2 files as feat: add typed local data layer.
 
 ### Task 3: Implement QR validation, scanner, and generator
 
@@ -100,7 +100,7 @@
 
 **Files:** Create src/features/enrollment/EnrollmentPage.tsx, src/features/enrollment/EnrollmentFlow.tsx, src/features/enrollment/ManualProfileForm.tsx, src/features/enrollment/SampleCapture.tsx, src/features/enrollment/FaceQualityPanel.tsx, src/features/people/PeopleDirectoryPage.tsx, src/features/people/PeopleDirectory.tsx, src/features/people/PersonProfilePage.tsx, src/features/people/ProfileEditor.tsx, tests/integration/enrollment/enrollmentFlow.test.tsx, tests/ui/enrollment/EnrollmentPage.test.tsx, and tests/ui/people/PeopleDirectory.test.tsx.
 
-**Interfaces:** EnrollmentFlow accepts an optional ValidatedPersonPayload and requires explicit consent before starting camera recognition. It saves 3â€“5 quality-approved descriptors from one primary face through the VisionEngine and template repository; source frames are discarded. PeopleDirectory reads profiles/events through repositories and exposes search/filter/sort/select. PersonProfilePage is keyed by personId and shows profile, enrollment state, and linked event history.
+**Interfaces:** EnrollmentFlow accepts an optional ValidatedPersonPayload and requires explicit consent before starting camera recognition. It saves 3Ã¢â‚¬â€œ5 quality-approved descriptors from one primary face through the VisionEngine and template repository; source frames are discarded. PeopleDirectory reads profiles/events through repositories and exposes search/filter/sort/select. PersonProfilePage is keyed by personId and shows profile, enrollment state, and linked event history.
 
 - [ ] Step 1: Write qrPreviewRequiresExplicitSave, consentPrecedesCapture, rejectsPoorSampleAndOffersRetry, storesOnlyQualityApprovedDescriptors, cancellationReleasesCamera, reEnrollmentRequiresConfirmation, editingUpdatesProfile, and deletingProfileRemovesTemplatesAndEvents tests.
 - [ ] Step 2: Run npm test -- --run tests/integration/enrollment tests/ui/enrollment tests/ui/people. Expected: FAIL because enrollment and people flows are absent.
