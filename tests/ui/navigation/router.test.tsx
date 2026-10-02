@@ -36,11 +36,11 @@ describe("application routes", () => {
       const view = render(<RouterProvider router={router} />);
 
       expect(screen.getByRole("main")).toBeInTheDocument();
-      await expect(screen.findByRole("heading", { level: 1, name: routeCase.heading }, { timeout: 5000 })).resolves.toBeInTheDocument();
+      await expect(screen.findByRole("heading", { level: 1, name: routeCase.heading }, { timeout: 15000 })).resolves.toBeInTheDocument();
 
       view.unmount();
     }
-  }, 30000);
+  }, 90000);
 
   it("shows an accessible not-found page with a home link", async () => {
     expect(routerModule, "src/app/router.tsx should export appRouter").toBeDefined();

@@ -71,10 +71,13 @@ describe("browser vision engine", () => {
     expect(config.modelBasePath).toBe("https://vision.example/models/v1/human/");
     expect(config.face?.enabled).toBe(true);
     expect(config.face?.detector?.enabled).toBe(true);
+    expect(config.face?.detector?.modelPath).toBe("blazeface.json");
     expect(config.face?.detector?.minConfidence).toBe(0.35);
     expect(config.face?.detector?.maxDetected).toBe(8);
     expect(config.face?.mesh?.enabled).toBe(true);
+    expect(config.face?.mesh?.modelPath).toBe("facemesh.json");
     expect(config.face?.description?.enabled).toBe(true);
+    expect(config.face?.description?.modelPath).toBe("faceres.json");
     expect(config.face?.emotion?.enabled).toBe(false);
     expect(config.face?.gear?.enabled).toBe(false);
     expect(config.face?.antispoof?.enabled).toBe(false);
