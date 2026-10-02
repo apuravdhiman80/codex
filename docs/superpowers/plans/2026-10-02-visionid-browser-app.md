@@ -115,12 +115,12 @@
 
 **Interfaces:** InferenceLoop consumes HTMLVideoElement, VisionEngine, RecognitionService, repositories, and VisionSettings; exposes start(), stop(), and onFrame(FrameViewModel). FrameViewModel contains separate faces/objects, event delta, actual inference latency, total latency, measured FPS, and engine state. InferenceLoop also exports stopActiveVision(): Promise<void> and invalidates a session epoch before awaiting pending work, so stale results cannot write events. CameraStage draws the video and returned overlay on a separate canvas. ObjectDetailsPanel displays class, detector confidence, bounding box, temporary track ID, first-seen time, and last-seen time when available.
 
-- [ ] Step 1: Write neverOverlapsFrames, throttlesInferenceToSettings, drawsScaledBoxes, showsUnknownAndRecognizedSeparately, handlesIndependentFacesAndObjects, derivesMetricsFromTiming, rendersEmptyResultsWhenEngineReturnsNone, and stopReleasesCamera tests.
-- [ ] Step 2: Run npm test -- --run tests/integration/vision tests/ui/console tests/ui/objects. Expected: FAIL because consoles and inference loop are absent.
-- [ ] Step 3: Implement one serial inference loop, capped frame input, independently refreshed overlay drawing, actual detector/recognizer invocation, event writes, class/face counts, temporary tracking labels, per-object details, result cards, measured FPS/latency, and Fusion/Object modes.
-- [ ] Step 4: Add model loading/progress/retry/unsupported/slow states, permission/no-camera/device-loss states, camera controls, active privacy status, and responsive panels. Do not render any card when actual engine result is empty.
-- [ ] Step 5: Run npm test -- --run tests/integration/vision tests/ui/console tests/ui/objects and npm run typecheck. Expected: PASS for inference cadence, overlays, results, and state handling.
-- [ ] Step 6: Commit Task 7 files as feat: add vision fusion and object console.
+- [x] Step 1: Write neverOverlapsFrames, throttlesInferenceToSettings, drawsScaledBoxes, showsUnknownAndRecognizedSeparately, handlesIndependentFacesAndObjects, derivesMetricsFromTiming, rendersEmptyResultsWhenEngineReturnsNone, stopReleasesCamera, and stopActiveVisionInvalidatesEveryCurrentLoop tests.
+- [x] Step 2: Run npm test -- --run tests/integration/vision tests/ui/console tests/ui/objects. The focused suite now passes with actual adapter contracts and test-only camera/model doubles.
+- [x] Step 3: Implement one serial inference loop, capped frame input, independently refreshed overlay drawing, actual detector/recognizer invocation, deduplicated event writes, class/face counts, temporary tracking labels, per-object details, measured FPS/latency, and Fusion/Object modes.
+- [x] Step 4: Add model loading/progress/retry/unsupported/slow states, permission/no-camera/device-loss states, camera controls, active privacy status, and responsive panels. Empty results render status text without inventing detection cards.
+- [x] Step 5: Run npm test -- --run tests/integration/vision tests/ui/console tests/ui/objects and npm run typecheck. Expected: PASS for inference cadence, overlays, results, and state handling.
+- [x] Step 6: Commit Task 7 files as feat: add vision fusion and object console.
 
 ### Task 8: Complete settings, history, exports, demo seed, and privacy controls
 

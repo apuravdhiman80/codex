@@ -46,6 +46,7 @@ export type PersonProfilePatch = Partial<
     | "metadata"
     | "photoBlob"
     | "consentRecordedAt"
+    | "lastDetectedAt"
   >
 >;
 

@@ -103,6 +103,9 @@ function validatePatch(input: PersonProfilePatch): void {
   if (input.consentRecordedAt !== undefined && (!Number.isFinite(input.consentRecordedAt) || input.consentRecordedAt <= 0)) {
     throw new DataLayerError("invalid", "Consent timestamp is invalid.");
   }
+  if (input.lastDetectedAt !== undefined && (!Number.isFinite(input.lastDetectedAt) || input.lastDetectedAt <= 0)) {
+    throw new DataLayerError("invalid", "Detection timestamp is invalid.");
+  }
 }
 
 export async function createProfile(input: CreatePersonInput): Promise<PersonProfile> {

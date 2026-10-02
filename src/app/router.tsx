@@ -5,6 +5,8 @@ import { RouteShellPage } from "../pages/RouteShellPage";
 import { EnrollmentPage } from "../features/enrollment/EnrollmentPage";
 import { PeopleDirectoryPage } from "../features/people/PeopleDirectoryPage";
 import { PersonProfilePage } from "../features/people/PersonProfilePage";
+import { VisionConsolePage } from "../features/vision/VisionConsolePage";
+import { ObjectDetectionPage } from "../features/objects/ObjectDetectionPage";
 
 const appRoutes: RouteObject[] = [
   {
@@ -13,8 +15,8 @@ const appRoutes: RouteObject[] = [
     errorElement: <RouteErrorBoundary />,
     children: [
       { index: true, element: <RouteShellPage title="VisionID AI" /> },
-      { path: "console", element: <RouteShellPage title="Vision Console" /> },
-      { path: "objects", element: <RouteShellPage title="Object Detection" /> },
+      { path: "console", element: <VisionConsolePage /> },
+      { path: "objects", element: <ObjectDetectionPage /> },
       { path: "enroll", element: <EnrollmentPage /> },
       { path: "people", element: <PeopleDirectoryPage /> },
       { path: "people/:personId", element: <PersonProfilePage /> },

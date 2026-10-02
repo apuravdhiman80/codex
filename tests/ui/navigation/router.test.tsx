@@ -15,8 +15,8 @@ const routerModule = routeModules["/src/app/router.tsx"];
 
 const routeCases = [
   { path: "/", heading: "VisionID AI" },
-  { path: "/console", heading: "Vision Console" },
-  { path: "/objects", heading: "Object Detection" },
+  { path: "/console", heading: "Vision Fusion Console" },
+  { path: "/objects", heading: "Object Detection Console" },
   { path: "/enroll", heading: "Enroll a Person" },
   { path: "/people", heading: "People Directory" },
   { path: "/people/demo-person", heading: "Person Profile" },
