@@ -16,6 +16,7 @@ interface HumanFaceOutput {
   boxScore?: number;
   meshRaw?: number[][];
   embedding?: number[] | null;
+  rotation?: { angle?: { yaw?: number; pitch?: number; roll?: number } };
 }
 
 interface HumanResultOutput {
@@ -251,6 +252,9 @@ function mapFaces(faceOutputs: HumanFaceOutput[] | undefined, width: number, hei
       box,
       detectorConfidence: confidence,
       ...(landmarks?.length ? { landmarks } : {}),
+      ...(face.rotation?.angle && Number.isFinite(face.rotation.angle.yaw) && Number.isFinite(face.rotation.angle.pitch) && Number.isFinite(face.rotation.angle.roll)
+        ? { pose: { yaw: face.rotation.angle.yaw!, pitch: face.rotation.angle.pitch!, roll: face.rotation.angle.roll! } }
+        : {}),
       ...(descriptor ? { descriptor } : {}),
     });
   }

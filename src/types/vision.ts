@@ -12,10 +12,18 @@ export interface FaceLandmark {
   name?: string;
 }
 
+export interface FacePose {
+  /** Human reports yaw, pitch, and roll in radians. */
+  yaw: number;
+  pitch: number;
+  roll: number;
+}
+
 export interface FaceResult {
   box: BoundingBox;
   detectorConfidence: number;
   landmarks?: FaceLandmark[];
+  pose?: FacePose;
   descriptor?: Float32Array;
 }
 

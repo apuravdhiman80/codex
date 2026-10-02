@@ -89,12 +89,12 @@
 
 **Interfaces:** EnrolledProfile is { personId: string; templates: FaceTemplate[] }. matchFace(descriptor: Float32Array, profiles: EnrolledProfile[], config: RecognitionConfig): RecognitionDecision returns recognized/personId/similarity, unknown/bestSimilarity, or ambiguous/bestSimilarity/runnerUpSimilarity. RecognitionService exports recognizeFaces(faces: FaceResult[], profiles: EnrolledProfile[], config: RecognitionConfig): RecognitionDecision[]. assessFaceQuality(face: FaceResult, frame: ImageData, prompt: PosePrompt, config: QualityConfig): QualityReport. updateTracks(previous: Track[], detections: Detection[], now: number, config: TrackingConfig): Track[] assigns temporary IDs and expires absent tracks. associateFacePerson(face, personBoxes): string | undefined only returns a person track when containment/overlap passes the configured gate.
 
-- [ ] Step 1: Write returnsUnknownBelowThreshold, returnsUnknownWhenTopMatchesAreTooClose, comparesEachFaceIndependently, rejectsInvalidOrMismatchedVectors, appliesNamedQualityGates, associatesOverlappingBoxes, expiresMissingTracks, and deduplicatesEvents tests. Include zero vectors, one template, multiple templates, multiple people, and two faces in one frame.
-- [ ] Step 2: Run npm test -- --run tests/unit/recognition tests/unit/tracking tests/unit/fusion. Expected: FAIL because matcher, quality, tracker, and event aggregation are absent.
-- [ ] Step 3: Normalize only the documented Human similarity output in one adapter function; compare every face to every template and retain each profile's best template score. Return Unknown when best score is below 0.62 or the next-best margin is below 0.05. Keep thresholds configurable and scores distinctly typed.
-- [ ] Step 4: Implement transparent size/brightness/sharpness/pose quality heuristics, duplicate candidate review without auto-merge, IoU/centroid track association with temporary IDs and 1800 ms expiry, face/person containment association, and event deduplication.
-- [ ] Step 5: Run npm test -- --run tests/unit/recognition tests/unit/tracking tests/unit/fusion and npm run typecheck. Expected: PASS for matcher, quality, tracking, and fusion behavior.
-- [ ] Step 6: Commit Task 5 files as feat: add recognition and detection result logic.
+- [x] Step 1: Write returnsUnknownBelowThreshold, returnsUnknownWhenTopMatchesAreTooClose, comparesEachFaceIndependently, rejectsInvalidOrMismatchedVectors, appliesNamedQualityGates, associatesOverlappingBoxes, expiresMissingTracks, and deduplicatesEvents tests. Include zero vectors, one template, multiple templates, multiple people, and two faces in one frame.
+- [x] Step 2: Run npm test -- --run tests/unit/recognition tests/unit/tracking tests/unit/fusion. Expected: FAIL because matcher, quality, tracker, and event aggregation are absent.
+- [x] Step 3: Normalize only the documented Human similarity output in one adapter function; compare every face to every template and retain each profile's best template score. Return Unknown when best score is below 0.62 or the next-best margin is below 0.05. Keep thresholds configurable and scores distinctly typed.
+- [x] Step 4: Implement transparent size/brightness/sharpness/pose quality heuristics, duplicate candidate review without auto-merge, IoU/centroid track association with temporary IDs and 1800 ms expiry, face/person containment association, and event deduplication.
+- [x] Step 5: Run npm test -- --run tests/unit/recognition tests/unit/tracking tests/unit/fusion and npm run typecheck. Expected: PASS for matcher, quality, tracking, and fusion behavior.
+- [x] Step 6: Commit Task 5 files as feat: add recognition and detection result logic.
 
 ### Task 6: Deliver opt-in enrollment, directory, and profile views
 
