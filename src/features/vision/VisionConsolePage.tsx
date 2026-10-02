@@ -11,6 +11,7 @@ import { MetricsBar } from "./MetricsBar";
 import { ResultPanel } from "./ResultPanel";
 import { VisionControls } from "./VisionControls";
 import { resolveVisionConsoleServices, type VisionConsoleServices } from "./visionServices";
+import { publishSessionMetrics } from "./sessionMetrics";
 
 interface VisionConsolePageProps {
   mode?: VisionMode;
@@ -110,16 +111,21 @@ export function VisionConsolePage({ mode: fixedMode, services: serviceOverrides 
         : { facingMode, width: settings.maxInputWidth, height: settings.maxInputHeight });
       sessionRef.current = session;
       void services.camera.enumerateCameras().then(setCameras);
+      publishSessionMetrics({ cameraActive: true, measuredFps: null, inferenceLatencyMs: null, totalLatencyMs: null, capturedAt: null });
       const loopDependencies: InferenceLoopDependencies = {
         video: videoRef.current,
         engine,
         settings,
         mode,
-        onFrame: setFrame,
+        onFrame: (nextFrame) => {
+          setFrame(nextFrame);
+          publishSessionMetrics({ measuredFps: nextFrame.measuredFps || null, inferenceLatencyMs: nextFrame.inferenceLatencyMs, totalLatencyMs: nextFrame.totalLatencyMs, capturedAt: nextFrame.capturedAt, cameraActive: true });
+        },
         onStop: () => {
           const current = sessionRef.current;
           sessionRef.current = undefined;
           if (current?.active) services.camera.stopCamera(current);
+          publishSessionMetrics({ cameraActive: false });
           setRunning(false);
         },
         listProfiles: services.listProfiles,
@@ -131,6 +137,7 @@ export function VisionConsolePage({ mode: fixedMode, services: serviceOverrides 
       const loop = new InferenceLoop(loopDependencies);
       loopRef.current = loop;
       setRunning(true);
+      publishSessionMetrics({ cameraActive: true });
       setCameraStatus(services.camera.status?.() ?? { state: "active", message: "Camera is active locally.", deviceId: session.deviceId });
       loop.start();
     } catch (cause) {
@@ -154,6 +161,7 @@ export function VisionConsolePage({ mode: fixedMode, services: serviceOverrides 
     sessionRef.current = undefined;
     if (session?.active) services.camera.stopCamera(session);
     setRunning(false);
+    publishSessionMetrics({ cameraActive: false });
     setFrame(undefined);
     setCameraStatus(services.camera.status?.() ?? { state: "idle", message: "Camera is off." });
   }

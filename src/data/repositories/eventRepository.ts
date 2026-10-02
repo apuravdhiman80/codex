@@ -29,3 +29,22 @@ export async function queryEvents(query: EventQuery = {}): Promise<DetectionEven
     throw toDataLayerError(error);
   }
 }
+
+export async function deleteAllEvents(): Promise<void> {
+  await ensureDatabaseReady();
+  try {
+    await appDatabase.events.clear();
+  } catch (error) {
+    throw toDataLayerError(error);
+  }
+}
+
+export async function pruneEventsBefore(timestamp: number): Promise<number> {
+  if (!Number.isFinite(timestamp) || timestamp < 0) throw new Error("Event retention cutoff must be a non-negative timestamp.");
+  await ensureDatabaseReady();
+  try {
+    return await appDatabase.events.where("timestamp").below(timestamp).delete();
+  } catch (error) {
+    throw toDataLayerError(error);
+  }
+}

@@ -7,6 +7,8 @@ import { PeopleDirectoryPage } from "../features/people/PeopleDirectoryPage";
 import { PersonProfilePage } from "../features/people/PersonProfilePage";
 import { VisionConsolePage } from "../features/vision/VisionConsolePage";
 import { ObjectDetectionPage } from "../features/objects/ObjectDetectionPage";
+import { DetectionHistoryPage } from "../features/history/DetectionHistoryPage";
+import { SettingsPage } from "../features/settings/SettingsPage";
 
 const appRoutes: RouteObject[] = [
   {
@@ -20,8 +22,8 @@ const appRoutes: RouteObject[] = [
       { path: "enroll", element: <EnrollmentPage /> },
       { path: "people", element: <PeopleDirectoryPage /> },
       { path: "people/:personId", element: <PersonProfilePage /> },
-      { path: "history", element: <RouteShellPage title="Detection History" /> },
-      { path: "settings", element: <RouteShellPage title="Settings" /> },
+      { path: "history", element: <DetectionHistoryPage /> },
+      { path: "settings", element: <SettingsPage /> },
       {
         path: "*",
         element: (

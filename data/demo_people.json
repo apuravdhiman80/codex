@@ -1,0 +1,5 @@
+[
+  { "personId": "DEMO-01", "name": "Demo User 01", "role": "Visitor", "department": "Demo Lab", "organization": "VisionID Sample", "isDemo": true },
+  { "personId": "DEMO-02", "name": "Demo User 02", "role": "Student", "department": "Computer Vision", "organization": "VisionID Sample", "isDemo": true },
+  { "personId": "DEMO-03", "name": "Demo User 03", "role": "Researcher", "department": "AI Systems", "organization": "VisionID Sample", "isDemo": true }
+]

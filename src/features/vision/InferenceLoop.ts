@@ -105,6 +105,15 @@ export class InferenceLoop {
     this.dependencies = dependencies;
   }
 
+  async configure(settings: VisionSettings): Promise<void> {
+    await this.dependencies.engine.configure(settings);
+    this.dependencies.settings = settings;
+    if (this.running && this.timer !== undefined) {
+      clearTimeout(this.timer);
+      this.timer = setTimeout(() => void this.run(this.epoch), settings.inferenceIntervalMs);
+    }
+  }
+
   start(): void {
     if (this.running) return;
     this.running = true;
@@ -303,6 +312,10 @@ export class InferenceLoop {
 
 export async function stopActiveVision(): Promise<void> {
   await Promise.all([...activeLoops].map((loop) => loop.stop()));
+}
+
+export async function configureActiveVision(settings: VisionSettings): Promise<void> {
+  await Promise.all([...activeLoops].map((loop) => loop.configure(settings)));
 }
 
 const localTime = () => Date.now();

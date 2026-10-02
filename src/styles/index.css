@@ -2,6 +2,7 @@
 @import "./tokens.css";
 @import "./people-enrollment.css";
 @import "./vision-console.css";
+@import "./operations.css";
 
 :focus-visible {
   outline: 2px solid var(--accent);

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { NavLink, Outlet } from "react-router";
 import {
   Activity,
@@ -13,6 +13,8 @@ import {
   UsersRound,
   X,
 } from "lucide-react";
+import { currentSettings } from "../features/settings/settingsService";
+import { getSessionMetrics, subscribeSessionMetrics } from "../features/vision/sessionMetrics";
 
 const navigation = [
   { label: "Overview", to: "/", icon: LayoutDashboard, end: true },
@@ -26,6 +28,8 @@ const navigation = [
 
 export function AppShell() {
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
+  const metrics = useSyncExternalStore(subscribeSessionMetrics, getSessionMetrics, getSessionMetrics);
+  useEffect(() => { void currentSettings().catch(() => undefined); }, []);
 
   return (
     <div className="vision-shell">
@@ -122,7 +126,7 @@ export function AppShell() {
           </div>
           <div className="topbar-status" role="status">
             <span className="status-pulse" />
-            <span>ENGINE STANDBY</span>
+            <span>{metrics.cameraActive ? "CAMERA ACTIVE" : "ENGINE STANDBY"}</span>
           </div>
         </header>
 

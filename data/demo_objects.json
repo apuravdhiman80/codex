@@ -1,0 +1,4 @@
+[
+  { "className": "Bottle", "detectorConfidence": 0.91, "mode": "fusion", "isDemo": true },
+  { "className": "Laptop", "detectorConfidence": 0.94, "mode": "objects", "isDemo": true }
+]

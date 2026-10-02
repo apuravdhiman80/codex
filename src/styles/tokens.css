@@ -19,6 +19,30 @@
   --success: #4adea5;
 }
 
+:root[data-theme="light"] {
+  color-scheme: light;
+  --canvas: #f3f7fb;
+  --surface: #ffffff;
+  --surface-raised: #f6f9fc;
+  --surface-border: rgba(41, 58, 86, 0.13);
+  --text-primary: #142138;
+  --text-secondary: #506078;
+  --text-muted: #73829a;
+  --accent: #078b86;
+  --accent-soft: rgba(7, 139, 134, 0.1);
+  --blue: #386dd4;
+  --danger: #c83f5d;
+  --success: #138b5c;
+}
+
+:root[data-theme="light"] body { background: radial-gradient(ellipse at 75% -20%, rgba(92, 144, 189, 0.14), transparent 38%), var(--canvas); }
+:root[data-theme="light"] .sidebar { background: rgba(249, 252, 255, 0.96); }
+:root[data-theme="light"] .topbar { background: rgba(243, 247, 251, 0.91); }
+:root[data-theme="light"] .privacy-card { background: rgba(7, 139, 134, 0.07); }
+:root[data-theme="light"] input,
+:root[data-theme="light"] select,
+:root[data-theme="light"] textarea { color: var(--text-primary); background-color: #fff; }
+
 * {
   box-sizing: border-box;
 }
