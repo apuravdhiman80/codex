@@ -263,3 +263,14 @@
   .landing-kicker > span:last-child { width: 100%; }
   .landing-hero h1 { letter-spacing: -2px; }
 }
+.e2e-adapter-notice {
+  margin: 0 0 1rem;
+  border: 1px solid #eab765;
+  border-radius: 0.65rem;
+  padding: 0.7rem 0.9rem;
+  color: #ffdca7;
+  background: rgb(120 78 18 / 18%);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.035em;
+}

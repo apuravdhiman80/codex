@@ -9,6 +9,11 @@ import type { VisionEngine } from "../../ai/engine/types";
 import type { PersonProfile, PersonProfilePatch, FaceTemplate } from "../../types/person";
 import type { DetectionEvent, EventQuery, NewDetectionEvent } from "../../types/events";
 import type { VisionSettings } from "../../types/vision";
+import { createE2EVisionAdapters } from "./e2eVisionAdapters";
+
+const e2eAdapters = import.meta.env.MODE === "e2e" && import.meta.env.VITE_E2E_TEST_ADAPTERS === "true"
+  ? createE2EVisionAdapters()
+  : undefined;
 
 export interface VisionConsoleServices {
   camera: Pick<BrowserCameraService, "enumerateCameras" | "startCamera" | "stopCamera" | "subscribeToCameraStatus" | "status">;
@@ -19,11 +24,13 @@ export interface VisionConsoleServices {
   queryEvents(query?: EventQuery): Promise<DetectionEvent[]>;
   addEvents(events: NewDetectionEvent[]): Promise<DetectionEvent[]>;
   updateProfile(id: string, patch: PersonProfilePatch): Promise<PersonProfile>;
+  isTestAdapter?: boolean;
 }
 
 export const DEFAULT_VISION_CONSOLE_SERVICES: VisionConsoleServices = {
-  camera: cameraService,
-  createEngine: (settings) => createVisionEngine(settings),
+  camera: e2eAdapters?.camera ?? cameraService,
+  createEngine: e2eAdapters?.createEngine ?? ((settings) => createVisionEngine(settings)),
+  ...(e2eAdapters ? { isTestAdapter: true } : {}),
   getSettings: async () => (await getSettings()) ?? DEFAULT_VISION_SETTINGS,
   listProfiles,
   listTemplatesForPerson,

@@ -24,12 +24,17 @@ test-results/
 .worktrees/
 .superpowers/sdd/
 output/pdf/rendered/
+output/pdf/render-final/
+output/pdf/report-extracted.txt
 output/pdf/*.aux
 output/pdf/*.log
 output/pdf/*.out
 output/pdf/*.toc
 output/pdf/*.fls
 output/pdf/*.fdb_latexmk
+output/pdf/*.blg
+output/pdf/*.lof
+output/pdf/*.lot
 output/pdf/*.bbl
 output/pdf/*.bcf
 output/pdf/*.run.xml
