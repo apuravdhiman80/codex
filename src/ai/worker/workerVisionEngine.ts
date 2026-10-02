@@ -77,6 +77,22 @@ export class WorkerVisionEngine implements VisionEngine {
     });
   }
 
+  similarity(first: Float32Array, second: Float32Array): number {
+    if (first.length !== second.length || first.length !== 1024 || !first.every(Number.isFinite) || !second.every(Number.isFinite)) {
+      throw new Error("Face descriptors are incompatible.");
+    }
+    let squaredDistance = 0;
+    for (let index = 0; index < first.length; index += 1) {
+      const difference = first[index]! - second[index]!;
+      squaredDistance += difference * difference;
+    }
+    // Matches Human 3.3.6 match.similarity defaults (order=2, multiplier=25, range=.2..8).
+    const distance = Math.round(100 * 25 * squaredDistance) / 100;
+    if (distance === 0) return 1;
+    const normalized = (1 - Math.sqrt(distance) / 100 - 0.2) / (0.8 - 0.2);
+    return Math.round(100 * Math.max(0, Math.min(1, normalized))) / 100;
+  }
+
   async dispose(): Promise<void> {
     try {
       await this.inference?.catch(() => undefined);

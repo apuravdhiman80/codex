@@ -2,6 +2,9 @@ import { createBrowserRouter, type RouteObject } from "react-router";
 import { AppShell } from "./AppShell";
 import { RouteErrorBoundary } from "./RouteErrorBoundary";
 import { RouteShellPage } from "../pages/RouteShellPage";
+import { EnrollmentPage } from "../features/enrollment/EnrollmentPage";
+import { PeopleDirectoryPage } from "../features/people/PeopleDirectoryPage";
+import { PersonProfilePage } from "../features/people/PersonProfilePage";
 
 const appRoutes: RouteObject[] = [
   {
@@ -12,9 +15,9 @@ const appRoutes: RouteObject[] = [
       { index: true, element: <RouteShellPage title="VisionID AI" /> },
       { path: "console", element: <RouteShellPage title="Vision Console" /> },
       { path: "objects", element: <RouteShellPage title="Object Detection" /> },
-      { path: "enroll", element: <RouteShellPage title="Enroll a Person" /> },
-      { path: "people", element: <RouteShellPage title="People Directory" /> },
-      { path: "people/:personId", element: <RouteShellPage title="Person Profile" /> },
+      { path: "enroll", element: <EnrollmentPage /> },
+      { path: "people", element: <PeopleDirectoryPage /> },
+      { path: "people/:personId", element: <PersonProfilePage /> },
       { path: "history", element: <RouteShellPage title="Detection History" /> },
       { path: "settings", element: <RouteShellPage title="Settings" /> },
       {

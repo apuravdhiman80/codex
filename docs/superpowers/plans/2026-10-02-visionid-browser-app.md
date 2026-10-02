@@ -102,12 +102,12 @@
 
 **Interfaces:** EnrollmentFlow accepts an optional ValidatedPersonPayload and requires explicit consent before starting camera recognition. It saves 3ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“5 quality-approved descriptors from one primary face through the VisionEngine and template repository; source frames are discarded. PeopleDirectory reads profiles/events through repositories and exposes search/filter/sort/select. PersonProfilePage is keyed by personId and shows profile, enrollment state, and linked event history.
 
-- [ ] Step 1: Write qrPreviewRequiresExplicitSave, consentPrecedesCapture, rejectsPoorSampleAndOffersRetry, storesOnlyQualityApprovedDescriptors, cancellationReleasesCamera, reEnrollmentRequiresConfirmation, editingUpdatesProfile, and deletingProfileRemovesTemplatesAndEvents tests.
-- [ ] Step 2: Run npm test -- --run tests/integration/enrollment tests/ui/enrollment tests/ui/people. Expected: FAIL because enrollment and people flows are absent.
-- [ ] Step 3: Implement QR/manual profile entry, consent/privacy notice, duplicate review, front/left/right guided capture, quality feedback, descriptor generation, explicit success/failure/progress, optional separately opted-in portrait capture, and template save. Demo profiles remain without templates.
-- [ ] Step 4: Implement searchable/filterable/sortable directory, profile detail/edit/delete/re-enroll, recognition statistics and detection history. Cascade deletion uses deleteProfileCascade and confirmation.
-- [ ] Step 5: Run npm test -- --run tests/integration/enrollment tests/ui/enrollment tests/ui/people, npm run typecheck, and npm run lint. Expected: PASS for complete enrollment and profile management.
-- [ ] Step 6: Commit Task 6 files as feat: add face enrollment and people directory.
+- [x] Step 1: Write qrPreviewRequiresExplicitSave, consentPrecedesCapture, rejectsPoorSampleAndOffersRetry, storesOnlyQualityApprovedDescriptors, cancellationReleasesCamera, reEnrollmentRequiresConfirmation, editingUpdatesProfile, deletingProfileRemovesTemplatesAndEvents, and storesAnOptionalPortraitOnlyWhenSelected tests.
+- [x] Step 2: Run npm test -- --run tests/integration/enrollment tests/ui/enrollment tests/ui/people. Expected: FAIL because enrollment and people flows are absent.
+- [x] Step 3: Implement QR/manual profile entry, consent/privacy notice, duplicate review, front/left/right guided capture, quality feedback, descriptor generation, explicit success/failure/progress, optional separately opted-in portrait upload, and template save. Demo profiles remain without templates.
+- [x] Step 4: Implement searchable/filterable/sortable directory, profile detail/edit/delete/re-enroll, recognition statistics and detection history. Cascade deletion uses deleteProfileCascade and confirmation.
+- [x] Step 5: Run npm test -- --run tests/integration/enrollment tests/ui/enrollment tests/ui/people, npm run typecheck, and npm run lint. Expected: PASS for complete enrollment and profile management.
+- [x] Step 6: Commit Task 6 files as feat: add face enrollment and people directory.
 
 ### Task 7: Build Vision Fusion and object detection consoles
 

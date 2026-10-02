@@ -26,6 +26,7 @@ export interface VisionEngine {
   configure(settings: VisionSettings): Promise<void>;
   dispose(): Promise<void>;
   subscribeStatus?(listener: (status: ModelStatus) => void): () => void;
+  similarity(first: Float32Array, second: Float32Array): number;
 }
 
 export function emptyFrameResult(modelId: string, timestamp: number, warning?: string): FrameResult {

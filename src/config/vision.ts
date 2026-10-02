@@ -11,6 +11,7 @@ export const VISION_CONFIG = {
   faceDetectionThreshold: 0.35,
   maxDetectedFaces: 8,
   maxDetectedObjects: 30,
+  minimumEnrollmentSamples: 3,
   duplicateCandidateThreshold: 0.75,
   minimumPoseTurnDegrees: 8,
   minimumQualityDetectorConfidence: 0.5,
