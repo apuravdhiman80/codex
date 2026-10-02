@@ -28,7 +28,7 @@
 - A camera removed while a frame is being processed must stop new inference, release tracks, and show a recoverable status; pin with Task 4 camera tests.
 - Two enrolled identities with close scores must resolve to Unknown rather than selecting a weak winner; pin with Task 5 matcher tests.
 - Unicode payload byte limits, malformed QR fields, and duplicate IDs must be validated before persistence; pin with Task 3 parser and UI tests.
-- A deleted profile must not regain linked events/templates from a stale in-flight result, clear-all must stop inference first, and clearing model cache must preserve personal data; pin with Tasks 7Ã¢â‚¬â€œ8 integration tests.
+- A deleted profile must not regain linked events/templates from a stale in-flight result, clear-all must stop inference first, and clearing model cache must preserve personal data; pin with Tasks 7ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ8 integration tests.
 
 ---
 
@@ -63,11 +63,11 @@
 
 **Interfaces:** Result<T, E> is { ok: true; value: T } | { ok: false; error: E }. parsePersonQr(payload: string, existingIds?: string[]): Result<ValidatedPersonPayload, QrValidationError>; createPersonQr(payload: ValidatedPersonPayload): string; QrScanner accepts onValidPayload and onError callbacks and exposes start/stop lifecycle internally. Version 1 allows person_id and name plus bounded optional role, department, email, phone, organization, and plain-text metadata only.
 
-- [ ] Step 1: Write parsesValidV1Payload, rejectsInvalidAndUnsupportedPayloads, enforcesUtf8ByteLimit, rejectsDuplicatePersonId, and roundTripsGeneratedQr tests. Include multibyte Unicode at the 8192-byte boundary; assert no photo, descriptor, arbitrary markup, or unknown root fields are accepted.
-- [ ] Step 2: Run npm test -- --run tests/unit/qr/qrSchema.test.ts. Expected: FAIL because parser/generator functions are absent.
-- [ ] Step 3: Implement byte-counting validation and normalization. Wrap ZXing Browser camera reader/writer with cleanup, selected device support, duplicate-decode suppression, accessible start/stop states, recoverable errors, and manual fallback. Show validated data in a preview before profile save.
-- [ ] Step 4: Run npm test -- --run tests/unit/qr tests/ui/qr tests/integration/qr and npm run typecheck. Expected: PASS for QR parse, scan states, generation, and profile preview.
-- [ ] Step 5: Commit Task 3 files as feat: add validated QR registration.
+- [x] Step 1: Write parsesValidV1Payload, rejectsInvalidAndUnsupportedPayloads, enforcesUtf8ByteLimit, rejectsDuplicatePersonId, and roundTripsGeneratedQr tests. Include multibyte Unicode at the 8192-byte boundary; assert no photo, descriptor, arbitrary markup, or unknown root fields are accepted.
+- [x] Step 2: Run npm test -- --run tests/unit/qr/qrSchema.test.ts. Expected: FAIL because parser/generator functions are absent.
+- [x] Step 3: Implement byte-counting validation and normalization. Wrap ZXing Browser camera reader/writer with cleanup, selected device support, duplicate-decode suppression, accessible start/stop states, recoverable errors, and manual fallback. Show validated data in a preview before profile save.
+- [x] Step 4: Run npm test -- --run tests/unit/qr tests/ui/qr tests/integration/qr and npm run typecheck. Expected: PASS for QR parse, scan states, generation, and profile preview.
+- [x] Step 5: Commit Task 3 files as feat: add validated QR registration.
 
 ### Task 4: Add camera lifecycle and real browser inference adapter
 
@@ -100,7 +100,7 @@
 
 **Files:** Create src/features/enrollment/EnrollmentPage.tsx, src/features/enrollment/EnrollmentFlow.tsx, src/features/enrollment/ManualProfileForm.tsx, src/features/enrollment/SampleCapture.tsx, src/features/enrollment/FaceQualityPanel.tsx, src/features/people/PeopleDirectoryPage.tsx, src/features/people/PeopleDirectory.tsx, src/features/people/PersonProfilePage.tsx, src/features/people/ProfileEditor.tsx, tests/integration/enrollment/enrollmentFlow.test.tsx, tests/ui/enrollment/EnrollmentPage.test.tsx, and tests/ui/people/PeopleDirectory.test.tsx.
 
-**Interfaces:** EnrollmentFlow accepts an optional ValidatedPersonPayload and requires explicit consent before starting camera recognition. It saves 3Ã¢â‚¬â€œ5 quality-approved descriptors from one primary face through the VisionEngine and template repository; source frames are discarded. PeopleDirectory reads profiles/events through repositories and exposes search/filter/sort/select. PersonProfilePage is keyed by personId and shows profile, enrollment state, and linked event history.
+**Interfaces:** EnrollmentFlow accepts an optional ValidatedPersonPayload and requires explicit consent before starting camera recognition. It saves 3ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ5 quality-approved descriptors from one primary face through the VisionEngine and template repository; source frames are discarded. PeopleDirectory reads profiles/events through repositories and exposes search/filter/sort/select. PersonProfilePage is keyed by personId and shows profile, enrollment state, and linked event history.
 
 - [ ] Step 1: Write qrPreviewRequiresExplicitSave, consentPrecedesCapture, rejectsPoorSampleAndOffersRetry, storesOnlyQualityApprovedDescriptors, cancellationReleasesCamera, reEnrollmentRequiresConfirmation, editingUpdatesProfile, and deletingProfileRemovesTemplatesAndEvents tests.
 - [ ] Step 2: Run npm test -- --run tests/integration/enrollment tests/ui/enrollment tests/ui/people. Expected: FAIL because enrollment and people flows are absent.
