@@ -28,7 +28,7 @@
 - A camera removed while a frame is being processed must stop new inference, release tracks, and show a recoverable status; pin with Task 4 camera tests.
 - Two enrolled identities with close scores must resolve to Unknown rather than selecting a weak winner; pin with Task 5 matcher tests.
 - Unicode payload byte limits, malformed QR fields, and duplicate IDs must be validated before persistence; pin with Task 3 parser and UI tests.
-- A deleted profile must not regain linked events/templates from a stale in-flight result, clear-all must stop inference first, and clearing model cache must preserve personal data; pin with Tasks 7ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ8 integration tests.
+- A deleted profile must not regain linked events/templates from a stale in-flight result, clear-all must stop inference first, and clearing model cache must preserve personal data; pin with Tasks 7ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“8 integration tests.
 
 ---
 
@@ -75,13 +75,13 @@
 
 **Interfaces:** VisionEngine exports initialize(): Promise<void>, detect(input: ImageBitmap | HTMLVideoElement): Promise<FrameResult>, status(): ModelStatus, configure(settings: VisionSettings): Promise<void>, and dispose(): Promise<void>. FrameResult has faces, objects, modelId, inferenceStartedAt, inferenceFinishedAt, and warnings. CameraService exports enumerateCameras, startCamera, stopCamera, and subscribeToCameraStatus. ModelCache exports cacheModelAssets(manifest): Promise<void> and clearModelCache(): Promise<void>; the service worker caches only versioned, manifest-listed same-origin model/WASM URLs in a named Cache Storage cache.
 
-- [ ] Step 1: Write mapsRealModelOutputsWithoutInventingResults, disablesUnrequestedHumanModules, handlesModelLoadFailureAndRetry, serializesInference, stopsOnDeviceRemoval, releasesTracksOnStop, cachesOnlyAllowlistedSameOriginAssets, and clearModelCachePreservesPersonalData tests. Expected: FAIL because adapter, camera service, and cache are absent.
-- [ ] Step 2: Run npm test -- --run tests/unit/ai/engine.test.ts tests/integration/camera tests/integration/ai/modelLoading.test.ts tests/integration/ai/modelCache.test.ts. Expected: FAIL on missing engine, lifecycle, and cache behavior.
-- [ ] Step 3: Verify the selected Human APIs, browser backends, exact package/model versions, licenses, model classes, and asset terms against current primary documentation. Bundle only distributable assets, write source/version/attribution/SHA-256 notices, and configure same-origin model/WASM URLs. Implement the adapter using only face detection/landmarks/descriptors and object detection; never configure sensitive attributes.
-- [ ] Step 4: Implement getUserMedia with front/rear camera selection, track-ended/device-removal handling, route cleanup, and retry. Add worker + transferable downscaled ImageBitmap where supported, serial throttled main-thread fallback otherwise, no queued overlapping frame, and bitmap close in finally.
-- [ ] Step 5: Register the versioned same-origin model-cache service worker and implement cacheModelAssets/clearModelCache with a strict manifest URL allowlist; cache no camera, profile, or QR data.
-- [ ] Step 6: Run npm test -- --run tests/unit/ai/engine.test.ts tests/integration/camera tests/integration/ai/modelLoading.test.ts tests/integration/ai/modelCache.test.ts, npm run typecheck, and npm run lint. Expected: PASS; verify only same-origin model requests and no camera-frame or profile-data requests to third parties.
-- [ ] Step 7: Commit Task 4 files as feat: add local browser vision engine.
+- [x] Step 1: Write mapsRealModelOutputsWithoutInventingResults, disablesUnrequestedHumanModules, handlesModelLoadFailureAndRetry, serializesInference, stopsOnDeviceRemoval, releasesTracksOnStop, cachesOnlyAllowlistedSameOriginAssets, and clearModelCachePreservesPersonalData tests. Expected: FAIL because adapter, camera service, and cache are absent.
+- [x] Step 2: Run npm test -- --run tests/unit/ai/engine.test.ts tests/integration/camera tests/integration/ai/modelLoading.test.ts tests/integration/ai/modelCache.test.ts. Expected: FAIL on missing engine, lifecycle, and cache behavior.
+- [x] Step 3: Verify the selected Human APIs, browser backends, exact package/model versions, licenses, model classes, and asset terms against current primary documentation. Bundle only distributable assets, write source/version/attribution/SHA-256 notices, and configure same-origin model/WASM URLs. Implement the adapter using only face detection/landmarks/descriptors and object detection; never configure sensitive attributes.
+- [x] Step 4: Implement getUserMedia with front/rear camera selection, track-ended/device-removal handling, route cleanup, and retry. Add worker + transferable downscaled ImageBitmap where supported, serial throttled main-thread fallback otherwise, no queued overlapping frame, and bitmap close in finally.
+- [x] Step 5: Register the versioned same-origin model-cache service worker and implement cacheModelAssets/clearModelCache with a strict manifest URL allowlist; cache no camera, profile, or QR data.
+- [x] Step 6: Run npm test -- --run tests/unit/ai/engine.test.ts tests/integration/camera tests/integration/ai/modelLoading.test.ts tests/integration/ai/modelCache.test.ts, npm run typecheck, and npm run lint. Expected: PASS; verify only same-origin model requests and no camera-frame or profile-data requests to third parties.
+- [x] Step 7: Commit Task 4 files as feat: add local browser vision engine.
 
 ### Task 5: Implement face quality, conservative matching, tracking, and fusion
 
@@ -100,7 +100,7 @@
 
 **Files:** Create src/features/enrollment/EnrollmentPage.tsx, src/features/enrollment/EnrollmentFlow.tsx, src/features/enrollment/ManualProfileForm.tsx, src/features/enrollment/SampleCapture.tsx, src/features/enrollment/FaceQualityPanel.tsx, src/features/people/PeopleDirectoryPage.tsx, src/features/people/PeopleDirectory.tsx, src/features/people/PersonProfilePage.tsx, src/features/people/ProfileEditor.tsx, tests/integration/enrollment/enrollmentFlow.test.tsx, tests/ui/enrollment/EnrollmentPage.test.tsx, and tests/ui/people/PeopleDirectory.test.tsx.
 
-**Interfaces:** EnrollmentFlow accepts an optional ValidatedPersonPayload and requires explicit consent before starting camera recognition. It saves 3ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ5 quality-approved descriptors from one primary face through the VisionEngine and template repository; source frames are discarded. PeopleDirectory reads profiles/events through repositories and exposes search/filter/sort/select. PersonProfilePage is keyed by personId and shows profile, enrollment state, and linked event history.
+**Interfaces:** EnrollmentFlow accepts an optional ValidatedPersonPayload and requires explicit consent before starting camera recognition. It saves 3ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“5 quality-approved descriptors from one primary face through the VisionEngine and template repository; source frames are discarded. PeopleDirectory reads profiles/events through repositories and exposes search/filter/sort/select. PersonProfilePage is keyed by personId and shows profile, enrollment state, and linked event history.
 
 - [ ] Step 1: Write qrPreviewRequiresExplicitSave, consentPrecedesCapture, rejectsPoorSampleAndOffersRetry, storesOnlyQualityApprovedDescriptors, cancellationReleasesCamera, reEnrollmentRequiresConfirmation, editingUpdatesProfile, and deletingProfileRemovesTemplatesAndEvents tests.
 - [ ] Step 2: Run npm test -- --run tests/integration/enrollment tests/ui/enrollment tests/ui/people. Expected: FAIL because enrollment and people flows are absent.

@@ -8,6 +8,9 @@ import type {
 export const VISION_CONFIG = {
   qrPayloadMaxBytes: 8192,
   faceDescriptorLength: 1024,
+  faceDetectionThreshold: 0.35,
+  maxDetectedFaces: 8,
+  maxDetectedObjects: 30,
   maxMetadataBytes: 2048,
   maxEnrollmentSamples: 5,
 } as const;
