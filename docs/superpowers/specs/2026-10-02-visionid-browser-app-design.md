@@ -1,7 +1,7 @@
 # VisionID AI Browser Application Design
 
 **Date:** 2026-10-02  
-**Status:** Conversational design approved; pending written-spec review.  
+**Status:** User approved; implementation plan drafted for review.
 **Scope:** Local-first VisionID AI browser application and its deployment, setup, README, architecture documentation, and automated tests.
 
 ## Product intent
