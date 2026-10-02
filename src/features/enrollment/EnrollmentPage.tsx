@@ -24,6 +24,12 @@ export function EnrollmentPage({ services: serviceOverrides, personId: personIdP
   const [returnToProfile, setReturnToProfile] = useState(false);
 
   useEffect(() => {
+    if (typeof window !== "undefined" && window.location.hash === "#qr-enrollment") {
+      requestAnimationFrame(() => document.getElementById("qr-enrollment")?.scrollIntoView?.({ behavior: "smooth" }));
+    }
+  }, []);
+
+  useEffect(() => {
     let active = true;
     void services.listProfiles().then((profiles) => {
       if (active) setExistingIds(profiles.map((profile) => profile.personId));
@@ -75,11 +81,11 @@ export function EnrollmentPage({ services: serviceOverrides, personId: personIdP
             <p className="muted-text">Camera frames are discarded after local processing. Face descriptors stay on this device. Camera recognition begins only after you record consent.</p>
           </header>
           <div className="enrollment-entry-grid">
-            <QrScanner
+            <div id="qr-enrollment"><QrScanner
               existingIds={existingIds}
               onValidPayload={setPayload}
               onError={() => undefined}
-            />
+            /></div>
             <ManualProfileForm existingIds={existingIds} onPreview={setPayload} />
           </div>
           <p className="muted-text">Need to view an enrolled person? <Link to="/people">Open the person directory</Link>.</p>

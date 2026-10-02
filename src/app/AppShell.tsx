@@ -13,7 +13,6 @@ import {
   UsersRound,
   X,
 } from "lucide-react";
-import { currentSettings } from "../features/settings/settingsService";
 import { getSessionMetrics, subscribeSessionMetrics } from "../features/vision/sessionMetrics";
 
 const navigation = [
@@ -29,7 +28,7 @@ const navigation = [
 export function AppShell() {
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
   const metrics = useSyncExternalStore(subscribeSessionMetrics, getSessionMetrics, getSessionMetrics);
-  useEffect(() => { void currentSettings().catch(() => undefined); }, []);
+  useEffect(() => { void import("../features/settings/settingsService").then(({ currentSettings }) => currentSettings()).catch(() => undefined); }, []);
 
   return (
     <div className="vision-shell">
@@ -70,7 +69,7 @@ export function AppShell() {
             >
               <Icon size={17} strokeWidth={1.8} aria-hidden="true" />
               <span>{label}</span>
-              {label === "Vision Console" && <span className="nav-live-dot" aria-label="Camera inactive" />}
+              {label === "Vision Console" && <span className={`nav-live-dot ${metrics.cameraActive ? "nav-live-dot-active" : ""}`} aria-label={metrics.cameraActive ? "Camera active" : "Camera inactive"} />}
             </NavLink>
           ))}
         </nav>
@@ -134,7 +133,6 @@ export function AppShell() {
           <Outlet />
         </main>
 
-        <div className="toast-region" aria-live="polite" aria-atomic="true" />
       </div>
     </div>
   );

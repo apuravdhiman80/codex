@@ -32,7 +32,7 @@ export function AnalyticsPanel({ loadEvents = loadLocalEvents }: AnalyticsPanelP
 
   return (
     <section className="ops-page analytics-page" aria-labelledby="analytics-heading">
-      <header className="ops-heading"><div><p className="eyebrow">LIVE VISION DASHBOARD</p><h1 id="analytics-heading">Vision Overview</h1><p>Local detection activity, recognition outcomes, and measured session performance.</p></div><div className="engine-state-pill"><span className={`status-dot ${metrics.cameraActive ? "status-dot-active" : ""}`} />{metrics.cameraActive ? "CAMERA ACTIVE" : "CAMERA OFF"}</div></header>
+      <header className="ops-heading"><div><p className="eyebrow">LIVE VISION DASHBOARD</p><h2 id="analytics-heading">Vision Overview</h2><p>Local detection activity, recognition outcomes, and measured session performance.</p></div><div className="engine-state-pill"><span className={`status-dot ${metrics.cameraActive ? "status-dot-active" : ""}`} />{metrics.cameraActive ? "CAMERA ACTIVE" : "CAMERA OFF"}</div></header>
       {error && <p className="inline-alert inline-alert-error" role="alert">{error}</p>}
       {summary.demoEvents > 0 && <div className="demo-banner"><span className="demo-pill">DEMO DATA</span><span>{summary.demoEvents} seeded events are included in these summaries. They are fictional samples, not live detections.</span></div>}
       <div className="analytics-stat-grid">

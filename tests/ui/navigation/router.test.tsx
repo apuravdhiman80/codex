@@ -25,7 +25,7 @@ const routeCases = [
 ];
 
 describe("application routes", () => {
-  it("renders every required route with a main landmark and heading", () => {
+  it("renders every required route with a main landmark and heading", async () => {
     expect(routerModule, "src/app/router.tsx should export appRouter").toBeDefined();
     if (!routerModule) return;
 
@@ -36,15 +36,13 @@ describe("application routes", () => {
       const view = render(<RouterProvider router={router} />);
 
       expect(screen.getByRole("main")).toBeInTheDocument();
-      expect(
-        screen.getByRole("heading", { level: 1, name: routeCase.heading }),
-      ).toBeInTheDocument();
+      await expect(screen.findByRole("heading", { level: 1, name: routeCase.heading }, { timeout: 5000 })).resolves.toBeInTheDocument();
 
       view.unmount();
     }
-  });
+  }, 30000);
 
-  it("shows an accessible not-found page with a home link", () => {
+  it("shows an accessible not-found page with a home link", async () => {
     expect(routerModule, "src/app/router.tsx should export appRouter").toBeDefined();
     if (!routerModule) return;
 
@@ -53,7 +51,7 @@ describe("application routes", () => {
     });
     render(<RouterProvider router={router} />);
 
-    expect(screen.getByRole("heading", { level: 1, name: "Page not found" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /return home/i })).toHaveAttribute("href", "/");
+    expect(await screen.findByRole("heading", { level: 1, name: /isn’t on the map/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /return to overview/i })).toHaveAttribute("href", "/");
   });
 });

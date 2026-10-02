@@ -176,7 +176,7 @@ export function VisionConsolePage({ mode: fixedMode, services: serviceOverrides 
         <div className="engine-state-pill" role="status"><span className={`status-dot ${engineStatus.state === "ready" ? "status-dot-active" : ""}`} />{statusLabel}</div>
       </header>
 
-      {error && <div className="inline-alert inline-alert-error vision-console-error" role="alert"><span>{error}</span><button type="button" className="button-secondary" onClick={() => { setError(""); }}>Dismiss</button></div>}
+      {error && <div className="inline-alert inline-alert-error vision-console-error" role="alert"><span>{error}</span><button type="button" className="button-secondary" disabled={busy} onClick={() => void startVision()}>Retry</button><button type="button" className="button-secondary" onClick={() => { setError(""); }}>Dismiss</button></div>}
       {cameraStatus.state === "denied" && <div className="inline-alert inline-alert-error" role="alert">Camera permission was denied. Allow camera access in your browser settings and select Start vision to retry.</div>}
       {cameraStatus.state === "unavailable" && <div className="inline-alert inline-alert-error" role="alert">No usable camera was found. Connect a camera, choose a device, and try again.</div>}
       {!settingsReady && <p className="vision-loading" role="status">Loading saved vision settings…</p>}

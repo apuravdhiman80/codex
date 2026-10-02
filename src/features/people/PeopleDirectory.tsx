@@ -3,6 +3,8 @@ import { Link } from "react-router";
 import { listProfiles } from "../../data/repositories/peopleRepository";
 import { listTemplatesForPerson } from "../../data/repositories/templateRepository";
 import type { PersonProfile } from "../../types/person";
+import { EmptyState } from "../../components/EmptyState";
+import { ErrorState } from "../../components/ErrorState";
 
 type SortMode = "name" | "newest" | "recently_detected";
 
@@ -37,6 +39,7 @@ export function PeopleDirectory({
   const [sort, setSort] = useState<SortMode>("name");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [reloadVersion, setReloadVersion] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -49,7 +52,7 @@ export function PeopleDirectory({
       if (active) setError(cause instanceof Error ? cause.message : "Local people could not be loaded.");
     }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [loadProfiles, listTemplates]);
+  }, [loadProfiles, listTemplates, reloadVersion]);
 
   const roles = useMemo(() => [...new Set(profiles.map((profile) => profile.role).filter(Boolean))].sort((a, b) => a.localeCompare(b)), [profiles]);
   const visibleProfiles = useMemo(() => {
@@ -91,12 +94,12 @@ export function PeopleDirectory({
         </label>
       </div>
       {loading && <p role="status">Loading local profiles…</p>}
-      {error && <p className="inline-alert inline-alert-error" role="alert">{error}</p>}
+      {error && <ErrorState title="Profiles could not load" message={error} onRetry={() => { setError(""); setLoading(true); setReloadVersion((version) => version + 1); }} />}
       {!loading && !error && profiles.length === 0 && (
-        <div className="empty-state"><p className="eyebrow">NO PROFILES YET</p><h2>No people enrolled yet</h2><p>Create a profile, then enroll face samples after consent.</p><Link className="button-primary" to="/enroll">Enroll a Person</Link></div>
+        <EmptyState eyebrow="NO PROFILES YET" title="No people enrolled yet" description="Create a profile, then enroll face samples after consent." action={<Link className="button-primary" to="/enroll">Enroll a Person</Link>} />
       )}
       {!loading && !error && profiles.length > 0 && visibleProfiles.length === 0 && (
-        <div className="empty-state"><h2>No profiles match</h2><p>Try another name, ID, or role.</p><button className="button-secondary" type="button" onClick={() => { setQuery(""); setRoleFilter("all"); }}>Clear filters</button></div>
+        <EmptyState title="No profiles match" description="Try another name, ID, or role." action={<button className="button-secondary" type="button" onClick={() => { setQuery(""); setRoleFilter("all"); }}>Clear filters</button>} />
       )}
       {visibleProfiles.length > 0 && (
         <div className="people-card-grid" aria-label={`${visibleProfiles.length} people`}>

@@ -1,14 +1,7 @@
 import { createBrowserRouter, type RouteObject } from "react-router";
 import { AppShell } from "./AppShell";
 import { RouteErrorBoundary } from "./RouteErrorBoundary";
-import { RouteShellPage } from "../pages/RouteShellPage";
-import { EnrollmentPage } from "../features/enrollment/EnrollmentPage";
-import { PeopleDirectoryPage } from "../features/people/PeopleDirectoryPage";
-import { PersonProfilePage } from "../features/people/PersonProfilePage";
-import { VisionConsolePage } from "../features/vision/VisionConsolePage";
-import { ObjectDetectionPage } from "../features/objects/ObjectDetectionPage";
-import { DetectionHistoryPage } from "../features/history/DetectionHistoryPage";
-import { SettingsPage } from "../features/settings/SettingsPage";
+import { DetectionHistoryPage, EnrollmentPage, LandingPage, NotFoundPage, ObjectDetectionPage, PeopleDirectoryPage, PersonProfilePage, SettingsPage, SuspendedPage, VisionConsolePage } from "./routeComponents";
 
 const appRoutes: RouteObject[] = [
   {
@@ -16,26 +9,17 @@ const appRoutes: RouteObject[] = [
     element: <AppShell />,
     errorElement: <RouteErrorBoundary />,
     children: [
-      { index: true, element: <RouteShellPage title="VisionID AI" /> },
-      { path: "console", element: <VisionConsolePage /> },
-      { path: "objects", element: <ObjectDetectionPage /> },
-      { path: "enroll", element: <EnrollmentPage /> },
-      { path: "people", element: <PeopleDirectoryPage /> },
-      { path: "people/:personId", element: <PersonProfilePage /> },
-      { path: "history", element: <DetectionHistoryPage /> },
-      { path: "settings", element: <SettingsPage /> },
+      { index: true, element: <SuspendedPage><LandingPage /></SuspendedPage> },
+      { path: "console", element: <SuspendedPage><VisionConsolePage /></SuspendedPage> },
+      { path: "objects", element: <SuspendedPage><ObjectDetectionPage /></SuspendedPage> },
+      { path: "enroll", element: <SuspendedPage><EnrollmentPage /></SuspendedPage> },
+      { path: "people", element: <SuspendedPage><PeopleDirectoryPage /></SuspendedPage> },
+      { path: "people/:personId", element: <SuspendedPage><PersonProfilePage /></SuspendedPage> },
+      { path: "history", element: <SuspendedPage><DetectionHistoryPage /></SuspendedPage> },
+      { path: "settings", element: <SuspendedPage><SettingsPage /></SuspendedPage> },
       {
         path: "*",
-        element: (
-          <RouteShellPage
-            title="Page not found"
-            description="That route is not part of VisionID AI."
-          >
-            <a className="text-cyan-300 underline underline-offset-4" href="/">
-              Return home
-            </a>
-          </RouteShellPage>
-        ),
+        element: <SuspendedPage><NotFoundPage /></SuspendedPage>,
       },
     ],
   },

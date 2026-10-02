@@ -7,6 +7,8 @@ import type { PersonProfile } from "../../types/person";
 import { exportEventsCsv, exportEventsJson, exportPeopleJson, exportSessionReport } from "./eventExport";
 import { filterEvents, type HistoryFilter } from "./historyFilters";
 import { HistoryFilterControls } from "./HistoryFilterControls";
+import { ConfirmDialog } from "../../components/ConfirmDialog";
+import { useToast } from "../../components/useToast";
 
 const emptyFilter: HistoryFilter = { search: "", kind: "all", demo: "all" };
 const timeLabel = (timestamp: number) => new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "medium" }).format(timestamp);
@@ -44,6 +46,8 @@ export function DetectionHistoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [clearDialogOpen, setClearDialogOpen] = useState(false);
+  const { showToast } = useToast();
   const visibleEvents = useMemo(() => filterEvents(events, filter), [events, filter]);
 
   async function refresh() {
@@ -63,12 +67,13 @@ export function DetectionHistoryPage() {
   }, []);
 
   async function clearHistory() {
-    if (!window.confirm("Delete all local detection history? Person profiles and face templates will be kept.")) return;
     try {
       await deleteAllEvents();
       setEvents([]);
       setNotice("Detection history was deleted from this browser.");
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "History could not be deleted."); }
+      showToast({ title: "History deleted", detail: "Person profiles and face templates were kept.", tone: "success" });
+    } catch (cause) { const detail = cause instanceof Error ? cause.message : "History could not be deleted."; setError(detail); showToast({ title: "History could not be deleted", detail, tone: "error" }); }
+    finally { setClearDialogOpen(false); }
   }
 
   return (
@@ -86,7 +91,7 @@ export function DetectionHistoryPage() {
             <button className="button-secondary" type="button" disabled={!visibleEvents.length} onClick={() => downloadFile("visionid-session-report.json", JSON.stringify(exportSessionReport(visibleEvents, { from: filter.from, to: filter.to }), null, 2), "application/json;charset=utf-8")}><FileJson size={15} /> Export summary</button>
             <button className="button-secondary" type="button" disabled={!people.length} onClick={() => downloadFile("visionid-people.json", exportPeopleJson(people), "application/json;charset=utf-8")}><FileJson size={15} /> Export directory</button>
           </div>
-          <button className="button-danger" type="button" disabled={!events.length} onClick={() => void clearHistory()}><Trash2 size={15} /> Clear history</button>
+          <button className="button-danger" type="button" disabled={!events.length} onClick={() => setClearDialogOpen(true)}><Trash2 size={15} /> Clear history</button>
         </div>
         <p className="ops-help">Exports include event labels, timestamps, separate confidence fields, and normalized boxes. Profile exports omit portraits; neither export contains biometric templates.</p>
       </section>
@@ -98,6 +103,7 @@ export function DetectionHistoryPage() {
           <div className="history-event-scores">{event.detectorConfidence !== undefined && <span>Detector <b>{(event.detectorConfidence * 100).toFixed(1)}%</b></span>}{event.recognitionSimilarity !== undefined && <span>Similarity <b>{(event.recognitionSimilarity * 100).toFixed(1)}%</b></span>}</div>
         </li>)}</ol>}
       </section>
+      <ConfirmDialog open={clearDialogOpen} title="Delete detection history?" description="All event timestamps, labels, confidence scores, and detection boxes will be removed. Person profiles and face templates will be kept." confirmLabel="Delete history" intent="danger" onCancel={() => setClearDialogOpen(false)} onConfirm={() => void clearHistory()} />
     </section>
   );
 }
