@@ -9,18 +9,24 @@ function FaceResultCard({ item }: { item: TrackedFaceResult }) {
         <div className="face-result-content">
           <div className="face-result-title"><strong>{item.profile.name}</strong><span>RECOGNIZED</span></div>
           <p>{item.profile.personId} · {item.profile.role || "Enrolled person"}{item.profile.department ? ` · ${item.profile.department}` : ""}</p>
-          <dl><div><dt>Identity similarity</dt><dd>{Math.round(item.decision.similarity * 100)}%</dd></div><div><dt>Face detector</dt><dd>{Math.round(item.face.detectorConfidence * 100)}%</dd></div><div><dt>Tracking ID</dt><dd>{item.trackId || "—"}</dd></div></dl>
+          <dl><div><dt>Identity similarity</dt><dd>{Math.round(item.decision.similarity * 100)}%</dd></div><div><dt>Face detector</dt><dd>{Math.round(item.face.detectorConfidence * 100)}%</dd></div><div><dt>Face track</dt><dd>{item.trackId || "—"}</dd></div>{item.associatedPersonTrackId && <div><dt>Person track</dt><dd>#{item.associatedPersonTrackId}</dd></div>}</dl>
         </div>
       </article>
     );
   }
-  const label = item.decision.status === "ambiguous" ? "Ambiguous match" : "Unknown person";
+  const label = item.decision.status === "ambiguous"
+    ? "Ambiguous match"
+    : item.decision.status === "unknown" && item.decision.reason === "profile_deleted" ? "Profile removed" : "Unknown person";
+  const explanation = item.decision.status === "unknown" && item.decision.reason === "profile_deleted"
+    ? "The profile was deleted while this frame was processing, so its identity was cleared."
+    : `Face detected · detector confidence ${Math.round(item.face.detectorConfidence * 100)}%. No enrolled identity is assigned.`;
   return (
     <article className="face-result-card face-result-unknown">
       <div className="face-result-icon" aria-hidden="true">?</div>
       <div className="face-result-content">
         <div className="face-result-title"><strong>{label}</strong><span>{item.decision.status === "ambiguous" ? "AMBIGUOUS" : "UNKNOWN"}</span></div>
-        <p>Face detected · detector confidence {Math.round(item.face.detectorConfidence * 100)}%. No enrolled identity is assigned.</p>
+        <p>{explanation}</p>
+        {item.associatedPersonTrackId && <p>Associated person object track #{item.associatedPersonTrackId}. This temporary track is not an identity.</p>}
       </div>
     </article>
   );

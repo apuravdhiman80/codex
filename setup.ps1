@@ -1,6 +1,6 @@
 $ErrorActionPreference = "Stop"
 
-Write-Host "VisionID AI setup" -ForegroundColor Cyan
+Write-Host "Local Object Detection setup" -ForegroundColor Cyan
 $node = Get-Command node -ErrorAction SilentlyContinue
 $npm = Get-Command npm -ErrorAction SilentlyContinue
 if (-not $node -or -not $npm) {
@@ -22,5 +22,5 @@ Write-Host "Checking the production build..."
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 Write-Host ""
-Write-Host "Setup complete. Start the app with: npm run dev" -ForegroundColor Green
+Write-Host "Setup complete. Start the app with: npm start" -ForegroundColor Green
 Write-Host "Then open http://localhost:5173. Browser E2E tests need: npx playwright install chromium"

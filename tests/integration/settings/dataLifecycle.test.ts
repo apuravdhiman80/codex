@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { appDatabase } from "../../../src/data/db";
-import { createProfile } from "../../../src/data/repositories/peopleRepository";
+import { createProfile, deleteProfileCascade, updateProfile } from "../../../src/data/repositories/peopleRepository";
 import { addEvents } from "../../../src/data/repositories/eventRepository";
+import { saveTemplates } from "../../../src/data/repositories/templateRepository";
 import { clearModelCache } from "../../../src/ai/engine/modelCache";
 import { clearAllLocalData, resetDemoData } from "../../../src/features/settings/dataLifecycle";
 import { seedDemoData } from "../../../src/data/seed/seedDemoData";
@@ -74,6 +75,51 @@ describe("local data lifecycle controls", () => {
     expect(await appDatabase.templates.count()).toBe(0);
     expect(await appDatabase.events.count()).toBe(0);
     expect(await appDatabase.settings.count()).toBe(0);
+  });
+
+  it("cachedRecognitionCannotRestoreADeletedIdentityOrHistoryEvent", async () => {
+    const profile = await makePrivateProfile();
+    const descriptor = new Float32Array(1024).fill(0.25);
+    await saveTemplates(profile.id, [{ descriptor, quality: 0.9, pose: "front", modelId: "unit" }]);
+    const cachedTemplate = {
+      id: "cached-template", personId: profile.id, descriptor, quality: 0.9, pose: "front",
+      createdAt: Date.now(), modelId: "unit", isDemo: false,
+    };
+    const onFrame = vi.fn();
+    const engine = {
+      detect: vi.fn(async () => ({
+        ...emptyFrame,
+        faces: [{ box: { x: 0.2, y: 0.1, width: 0.2, height: 0.25 }, detectorConfidence: 0.94, descriptor }],
+      })),
+      status: () => ({ state: "ready" as const, message: "ready", progress: 1, activeModels: [] }),
+      similarity: () => 0.95,
+    } as unknown as VisionEngine;
+    const loop = new InferenceLoop({
+      video: { videoWidth: 640, videoHeight: 480 } as HTMLVideoElement,
+      engine,
+      settings: { ...DEFAULT_VISION_SETTINGS, inferenceIntervalMs: 1000 },
+      mode: "fusion",
+      onFrame,
+      listProfiles: async () => [profile],
+      listTemplatesForPerson: async () => [cachedTemplate],
+      queryEvents: async () => [],
+      addEvents: async (rows) => {
+        await deleteProfileCascade(profile.id);
+        return addEvents(rows);
+      },
+      updateProfile,
+    });
+
+    loop.start();
+    await vi.waitFor(() => expect(onFrame).toHaveBeenCalled());
+    await loop.stop();
+    const view = onFrame.mock.calls[0]![0];
+
+    expect(view.faces[0]?.decision.status).toBe("unknown");
+    expect(view.faces[0]?.profile).toBeUndefined();
+    expect(view.eventDelta.some((event: { type: string }) => event.type === "person_recognized")).toBe(false);
+    expect(await appDatabase.templates.count()).toBe(0);
+    expect(await appDatabase.events.where("personId").equals(profile.id).count()).toBe(0);
   });
 
   it("clearModelCachePreservesPersonalDatabaseRows", async () => {

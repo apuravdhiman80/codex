@@ -14,6 +14,8 @@ export interface DetectionEvent {
   /** Internal PersonProfile.id; absent for unknown people and generic objects. */
   personId?: string;
   trackId?: string;
+  /** Temporary COCO person-object track containing this face; never an identity. */
+  associatedPersonTrackId?: string;
   detectorConfidence?: number;
   recognitionSimilarity?: number;
   boundingBox?: BoundingBox;

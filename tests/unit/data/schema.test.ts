@@ -37,20 +37,23 @@ describe("persisted biometric schema", () => {
   it("migratesVersionOneSettingsDuringDatabaseUpgrade", async () => {
     const name = `${APP_DATABASE_NAME}-migration-test`;
     const legacy = new Dexie(name);
-    legacy.version(1).stores({ settings: "id" });
+    legacy.version(1).stores({ settings: "id", people: "id,&personId,name,role,department,createdAt,lastDetectedAt,isDemo" });
     await legacy.open();
     await legacy.table("settings").put({
       id: "current",
       settings: { recognitionThreshold: 0.71, detectionThreshold: 0.61 },
     });
+    await legacy.table("people").put({ id: "legacy-person", personId: "cafe\u0301-01" });
     legacy.close();
 
     const current = new VisionDatabase(name);
     await current.open();
     const settings = await current.settings.get("current");
+    const person = await current.people.get("legacy-person");
 
     expect(settings?.recognitionThreshold).toBe(0.71);
     expect(settings?.objectThreshold).toBe(0.61);
+    expect(person?.personIdCanonical).toBe("CAFÉ-01");
 
     current.close();
     await current.delete();

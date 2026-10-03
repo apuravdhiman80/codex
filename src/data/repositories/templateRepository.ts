@@ -11,18 +11,20 @@ export async function saveTemplates(
   }
   await ensureDatabaseReady();
   try {
-    const profile = await appDatabase.people.get(personId);
-    if (!profile) throw new DataLayerError("not_found", "Person profile was not found.");
-    if (profile.isDemo) throw new DataLayerError("invalid", "Demo profiles cannot be face-enrolled.");
-    const rows = templates.map((template) => validateFaceTemplate({
-      ...template,
-      id: createLocalId(),
-      personId,
-      createdAt: Date.now(),
-      isDemo: false,
-    }));
-    await appDatabase.templates.bulkAdd(rows);
-    return rows;
+    return await appDatabase.transaction("rw", appDatabase.people, appDatabase.templates, async () => {
+      const profile = await appDatabase.people.get(personId);
+      if (!profile) throw new DataLayerError("not_found", "Person profile was not found.");
+      if (profile.isDemo) throw new DataLayerError("invalid", "Demo profiles cannot be face-enrolled.");
+      const rows = templates.map((template) => validateFaceTemplate({
+        ...template,
+        id: createLocalId(),
+        personId,
+        createdAt: Date.now(),
+        isDemo: false,
+      }));
+      await appDatabase.templates.bulkAdd(rows);
+      return rows;
+    });
   } catch (error) {
     throw toDataLayerError(error);
   }

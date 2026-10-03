@@ -4,7 +4,7 @@ import type { DetectionEvent } from "../../../src/types/events";
 import type { PersonProfile } from "../../../src/types/person";
 
 const events: DetectionEvent[] = [
-  { id: "e1", timestamp: 1_800_000_000_000, type: "person_recognized", label: "=HYPERLINK(\"bad\")", personId: "p1", trackId: "face-1", detectorConfidence: 0.92, recognitionSimilarity: 0.81, boundingBox: { x: 0.1, y: 0.2, width: 0.3, height: 0.4 }, mode: "fusion", isDemo: false },
+  { id: "e1", timestamp: 1_800_000_000_000, type: "person_recognized", label: "=HYPERLINK(\"bad\")", personId: "p1", trackId: "face-1", associatedPersonTrackId: "person-1", detectorConfidence: 0.92, recognitionSimilarity: 0.81, boundingBox: { x: 0.1, y: 0.2, width: 0.3, height: 0.4 }, mode: "fusion", isDemo: false },
   { id: "e2", timestamp: 1_800_000_001_000, type: "object_detected", label: "Bottle", detectorConfidence: 0.8, mode: "objects", isDemo: true },
   { id: "e3", timestamp: 1_800_000_002_000, type: "unknown_face", label: "Unknown person", detectorConfidence: 0.7, mode: "fusion", isDemo: false },
 ];
@@ -21,6 +21,8 @@ describe("privacy-safe history exports", () => {
   it("exportsOmitBiometricsRawFramesAndProfilePhoto", () => {
     const eventJson = exportEventsJson(events);
     expect(eventJson).toContain('"recognitionSimilarity": 0.81');
+    expect(eventJson).toContain('"associatedPersonTrackId": "person-1"');
+    expect(exportEventsCsv(events)).toContain("associatedPersonTrackId");
     expect(eventJson).not.toMatch(/descriptor|embedding|frame|imageData|qrPayload/iu);
     const person: PersonProfile & { photoBlob: Blob } = {
       id: "p1", personId: "P001", name: "Example", role: "Student", department: "Vision", metadata: {},

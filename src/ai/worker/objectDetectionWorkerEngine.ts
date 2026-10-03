@@ -1,31 +1,30 @@
-import type { VisionMode, VisionSettings } from "../../types/vision";
 import { DEFAULT_VISION_SETTINGS } from "../../config/vision";
-import { HumanVisionEngine } from "../engine/humanEngine";
+import type { VisionSettings } from "../../types/vision";
 import { ObjectDetectionEngine } from "../engine/objectEngine";
 import type { FrameResult, ModelStatus, VisionEngine } from "../engine/types";
 
 type RequestType = "initialize" | "detect" | "configure" | "dispose";
 type PendingRequest = { resolve: (value: FrameResult | void) => void; reject: (error: Error) => void };
 
-export class WorkerVisionEngine implements VisionEngine {
+export class ObjectDetectionWorkerEngine implements VisionEngine {
   private readonly worker: Worker;
   private settings: VisionSettings;
   private inference?: Promise<FrameResult>;
   private sequence = 0;
   private readonly pending = new Map<number, PendingRequest>();
   private readonly listeners = new Set<(status: ModelStatus) => void>();
-  private currentStatus: ModelStatus = { state: "idle", message: "Vision worker is stopped.", progress: 0, activeModels: [] };
+  private currentStatus: ModelStatus = { state: "idle", message: "Object detection worker is stopped.", progress: 0, activeModels: [] };
 
-  constructor(worker: Worker, settings: VisionSettings = DEFAULT_VISION_SETTINGS, private readonly mode: VisionMode = "fusion") {
+  constructor(worker: Worker, settings: VisionSettings = DEFAULT_VISION_SETTINGS) {
     this.worker = worker;
     this.settings = settings;
     worker.addEventListener("message", (event: MessageEvent) => this.handleMessage(event.data));
-    worker.addEventListener("error", () => this.failPending(new Error("The vision worker stopped unexpectedly.")));
-    worker.addEventListener("messageerror", () => this.failPending(new Error("A vision result could not be transferred from the worker.")));
+    worker.addEventListener("error", () => this.failPending(new Error("The object detection worker stopped unexpectedly.")));
+    worker.addEventListener("messageerror", () => this.failPending(new Error("An object detection result could not be transferred from the worker.")));
   }
 
   initialize(): Promise<void> {
-    return this.request("initialize", { settings: this.settings, mode: this.mode }).then(() => undefined);
+    return this.request("initialize", { settings: this.settings }).then(() => undefined);
   }
 
   detect(input: ImageBitmap | HTMLVideoElement): Promise<FrameResult> {
@@ -38,11 +37,11 @@ export class WorkerVisionEngine implements VisionEngine {
   }
 
   private async performDetection(input: ImageBitmap | HTMLVideoElement): Promise<FrameResult> {
-    const source = input as HTMLVideoElement;
-    const width = "videoWidth" in input ? source.videoWidth : input.width;
-    const height = "videoHeight" in input ? source.videoHeight : input.height;
+    const video = input as HTMLVideoElement;
+    const width = "videoWidth" in input ? video.videoWidth : input.width;
+    const height = "videoHeight" in input ? video.videoHeight : input.height;
     if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
-      throw new Error("Vision frame has no readable dimensions.");
+      throw new Error("Object frame has no readable dimensions.");
     }
     const scale = Math.min(1, this.settings.maxInputWidth / width, this.settings.maxInputHeight / height);
     const options = scale < 1
@@ -51,7 +50,7 @@ export class WorkerVisionEngine implements VisionEngine {
     const bitmap = options ? await createImageBitmap(input, options) : await createImageBitmap(input);
     const id = ++this.sequence;
     const result = new Promise<FrameResult>((resolve, reject) => {
-      this.pending.set(id, { resolve: (value) => value ? resolve(value) : reject(new Error("Worker returned no frame result.")), reject });
+      this.pending.set(id, { resolve: (value) => value ? resolve(value) : reject(new Error("Object worker returned no frame result.")), reject });
     });
     try {
       this.worker.postMessage({ id, type: "detect", bitmap }, [bitmap]);
@@ -78,32 +77,20 @@ export class WorkerVisionEngine implements VisionEngine {
     });
   }
 
-  similarity(first: Float32Array, second: Float32Array): number {
-    if (first.length !== second.length || first.length !== 1024 || !first.every(Number.isFinite) || !second.every(Number.isFinite)) {
-      throw new Error("Face descriptors are incompatible.");
-    }
-    let squaredDistance = 0;
-    for (let index = 0; index < first.length; index += 1) {
-      const difference = first[index]! - second[index]!;
-      squaredDistance += difference * difference;
-    }
-    // Matches Human 3.3.6 match.similarity defaults (order=2, multiplier=25, range=.2..8).
-    const distance = Math.round(100 * 25 * squaredDistance) / 100;
-    if (distance === 0) return 1;
-    const normalized = (1 - Math.sqrt(distance) / 100 - 0.2) / (0.8 - 0.2);
-    return Math.round(100 * Math.max(0, Math.min(1, normalized))) / 100;
-  }
-
   async dispose(): Promise<void> {
     try {
       await this.inference?.catch(() => undefined);
       await this.request("dispose");
     } finally {
       this.worker.terminate();
-      this.failPending(new Error("Vision worker was stopped."));
-      this.currentStatus = { state: "idle", message: "Vision worker is stopped.", progress: 0, activeModels: [] };
+      this.failPending(new Error("The object detection worker was stopped."));
+      this.currentStatus = { state: "idle", message: "Object detection worker is stopped.", progress: 0, activeModels: [] };
       this.listeners.forEach((listener) => listener(this.status()));
     }
+  }
+
+  similarity(): number {
+    throw new Error("Face matching is not available in object-only mode.");
   }
 
   private request(type: RequestType, data: Record<string, unknown> = {}): Promise<FrameResult | void> {
@@ -127,7 +114,7 @@ export class WorkerVisionEngine implements VisionEngine {
     const pending = this.pending.get(message.id);
     if (!pending) return;
     this.pending.delete(message.id);
-    if (message.type === "error") pending.reject(new Error(message.message ?? "Vision worker failed."));
+    if (message.type === "error") pending.reject(new Error(message.message ?? "Object detection worker failed."));
     else pending.resolve(message.result);
   }
 
@@ -137,20 +124,15 @@ export class WorkerVisionEngine implements VisionEngine {
   }
 }
 
-export function createVisionEngine(settings: VisionSettings, mode: VisionMode = "fusion"): VisionEngine {
+export function createObjectDetectionEngine(settings: VisionSettings = DEFAULT_VISION_SETTINGS): VisionEngine {
   const workerSupported = typeof Worker !== "undefined" && typeof OffscreenCanvas !== "undefined" && typeof createImageBitmap !== "undefined";
   if (workerSupported) {
     try {
-      const workerUrl = mode === "objects"
-        ? new URL("./objectInference.worker.ts", import.meta.url)
-        : new URL("./inference.worker.ts", import.meta.url);
-      const worker = new Worker(workerUrl, { type: "module", name: "visionid-inference" });
-      return new WorkerVisionEngine(worker, settings, mode);
+      const worker = new Worker(new URL("./objectInference.worker.ts", import.meta.url), { type: "module", name: "local-object-detector" });
+      return new ObjectDetectionWorkerEngine(worker, settings);
     } catch {
-      // Worker construction can be blocked by browser policy; main-thread inference remains supported.
+      // Main-thread inference remains available when worker creation is blocked.
     }
   }
-  return mode === "objects"
-    ? new ObjectDetectionEngine(undefined, settings)
-    : new HumanVisionEngine(undefined, settings);
+  return new ObjectDetectionEngine(undefined, settings);
 }

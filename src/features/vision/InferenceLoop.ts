@@ -1,9 +1,11 @@
 import { VISION_CONFIG } from "../../config/vision";
 import { aggregateEvents } from "../../ai/fusion/aggregateEvents";
+import { associateFacePerson } from "../../ai/fusion/associateFacePerson";
 import { matchFace, type RecognitionDecision } from "../../ai/recognition/matcher";
 import { updateTracks, type Detection, type Track } from "../../ai/tracking/boxTracker";
 import { addEvents as persistEvents, queryEvents as readEvents } from "../../data/repositories/eventRepository";
 import { listProfiles as readProfiles, updateProfile as writeProfile } from "../../data/repositories/peopleRepository";
+import { DataLayerError } from "../../data/db";
 import { listTemplatesForPerson as readTemplates } from "../../data/repositories/templateRepository";
 import type { VisionEngine, ModelStatus } from "../../ai/engine/types";
 import type { DetectionEvent, NewDetectionEvent } from "../../types/events";
@@ -14,6 +16,7 @@ import type { EnrolledProfile } from "../../ai/recognition/matcher";
 export interface TrackedFaceResult {
   face: FaceResult;
   trackId: string;
+  associatedPersonTrackId?: string;
   decision: RecognitionDecision;
   profile?: PersonProfile;
 }
@@ -184,7 +187,8 @@ export class InferenceLoop {
       : result.faces.filter((face) => face.detectorConfidence >= VISION_CONFIG.faceDetectionThreshold);
     const objects = mode === "recognition"
       ? []
-      : result.objects.filter((object) => object.detectorConfidence >= settings.objectThreshold);
+      : result.objects.filter((object) => object.detectorConfidence >= settings.objectThreshold
+        && (mode !== "objects" || object.className.toLowerCase() !== "person"));
     const detections: Detection[] = [
       ...faces.map((face) => ({ type: "face" as const, label: "Face", box: face.box, detectorConfidence: face.detectorConfidence })),
       ...objects.map((object) => ({ type: "object" as const, label: object.className, box: object.box, detectorConfidence: object.detectorConfidence })),
@@ -192,6 +196,20 @@ export class InferenceLoop {
     this.tracks = updateTracks(this.tracks, detections, capturedAt, { expiryMs: settings.trackExpiryMs });
     const faceTracks = tracksForDetections(detections.filter((item) => item.type === "face"), this.tracks, capturedAt);
     const objectTracks = tracksForDetections(detections.filter((item) => item.type === "object"), this.tracks, capturedAt);
+    const trackedObjects: TrackedObjectResult[] = objects.map((object, index) => {
+      const track = objectTracks[index];
+      return {
+        ...object,
+        trackId: track?.id ?? "",
+        firstSeenAt: track?.firstSeenAt ?? capturedAt,
+        lastSeenAt: track?.lastSeenAt ?? capturedAt,
+      };
+    });
+    const personBoxes = mode === "fusion"
+      ? trackedObjects
+        .filter((object) => object.className.toLowerCase() === "person" && object.trackId)
+        .map((object) => ({ trackId: object.trackId, box: object.box }))
+      : [];
     const identityById = new Map(profiles.map(({ profile, match }) => [match.personId, profile]));
     const trackedFaces: TrackedFaceResult[] = faces.map((face, index) => {
       const decision = face.descriptor
@@ -203,24 +221,23 @@ export class InferenceLoop {
           })
         : { status: "unknown" as const, reason: "invalid_descriptor" as const };
       const profile = decision.status === "recognized" ? identityById.get(decision.personId) : undefined;
-      return { face, trackId: faceTracks[index]?.id ?? "", decision, ...(profile ? { profile } : {}) };
-    });
-    const trackedObjects: TrackedObjectResult[] = objects.map((object, index) => {
-      const track = objectTracks[index];
+      const associatedPersonTrackId = mode === "fusion" ? associateFacePerson(face.box, personBoxes) : undefined;
       return {
-        ...object,
-        trackId: track?.id ?? "",
-        firstSeenAt: track?.firstSeenAt ?? capturedAt,
-        lastSeenAt: track?.lastSeenAt ?? capturedAt,
+        face,
+        trackId: faceTracks[index]?.id ?? "",
+        ...(associatedPersonTrackId ? { associatedPersonTrackId } : {}),
+        decision,
+        ...(profile ? { profile } : {}),
       };
     });
     const pendingEvents: NewDetectionEvent[] = [
-      ...trackedFaces.map(({ face, trackId, decision, profile }) => ({
+      ...trackedFaces.map(({ face, trackId, associatedPersonTrackId, decision, profile }) => ({
         timestamp: capturedAt,
         type: decision.status === "recognized" ? "person_recognized" as const : "unknown_face" as const,
         label: profile?.name ?? "Unknown person",
         ...(profile ? { personId: profile.id } : {}),
         ...(trackId ? { trackId } : {}),
+        ...(associatedPersonTrackId ? { associatedPersonTrackId } : {}),
         detectorConfidence: face.detectorConfidence,
         ...(decision.status === "recognized" ? { recognitionSimilarity: decision.similarity } : {}),
         boundingBox: face.box,
@@ -240,17 +257,28 @@ export class InferenceLoop {
     ];
     const eventDelta = await this.persistFrameEvents(pendingEvents, capturedAt, epoch, warnings);
     if (!this.isCurrent(epoch)) return;
+    const deletedProfileIds = new Set<string>();
     if (this.dependencies.updateProfile) {
       const detectedProfiles = new Set(trackedFaces.flatMap(({ decision, profile }) => decision.status === "recognized" && profile ? [profile.id] : []));
       await Promise.all([...detectedProfiles].map((id) => this.dependencies.updateProfile!(id, { lastDetectedAt: capturedAt }).catch((cause: unknown) => {
-        warnings.push(cause instanceof Error ? cause.message : "Recognition time could not be saved.");
+        if (cause instanceof DataLayerError && cause.code === "not_found") deletedProfileIds.add(id);
+        else warnings.push(cause instanceof Error ? cause.message : "Recognition time could not be saved.");
         return undefined;
       })));
       if (!this.isCurrent(epoch)) return;
     }
+    const visibleFaces = trackedFaces.map((item): TrackedFaceResult => {
+      if (!item.profile || !deletedProfileIds.has(item.profile.id)) return item;
+      return {
+        face: item.face,
+        trackId: item.trackId,
+        ...(item.associatedPersonTrackId ? { associatedPersonTrackId: item.associatedPersonTrackId } : {}),
+        decision: { status: "unknown", reason: "profile_deleted" },
+      };
+    });
     const ended = performance.now();
     this.dependencies.onFrame({
-      faces: trackedFaces,
+      faces: visibleFaces,
       objects: trackedObjects,
       eventDelta,
       inferenceLatencyMs: Math.max(0, result.inferenceFinishedAt - result.inferenceStartedAt),

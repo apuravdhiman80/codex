@@ -5,6 +5,7 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./tests/setup.ts"],
     exclude: [...configDefaults.exclude, "tests/e2e/**"],
+    maxWorkers: 4,
     clearMocks: true,
     restoreMocks: true,
   },

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_VISION_SETTINGS } from "../../../src/config/vision";
 import { appDatabase } from "../../../src/data/db";
+import { createProfile } from "../../../src/data/repositories/peopleRepository";
 import { getSettings } from "../../../src/data/repositories/settingsRepository";
 import { queryEvents } from "../../../src/data/repositories/eventRepository";
 import { addEvents } from "../../../src/data/repositories/eventRepository";
@@ -22,8 +23,9 @@ describe("settings and history preferences", () => {
 
   it("eventFiltersAndRetention", async () => {
     const now = Date.now();
+    const profile = await createProfile({ personId: "HISTORY-001", name: "Asha Rao", consentRecordedAt: now });
     await addEvents([
-      { timestamp: now - 10_000, type: "person_recognized", label: "Asha Rao", personId: "p1", detectorConfidence: 0.95, recognitionSimilarity: 0.84, mode: "fusion", isDemo: false },
+      { timestamp: now - 10_000, type: "person_recognized", label: "Asha Rao", personId: profile.id, detectorConfidence: 0.95, recognitionSimilarity: 0.84, mode: "fusion", isDemo: false },
       { timestamp: now - 5_000, type: "object_detected", label: "Bottle", detectorConfidence: 0.9, mode: "objects", isDemo: true },
       { timestamp: now, type: "unknown_face", label: "Unknown person", detectorConfidence: 0.7, mode: "fusion", isDemo: false },
       { timestamp: now - 2 * 24 * 60 * 60 * 1000, type: "object_detected", label: "Old chair", detectorConfidence: 0.8, mode: "objects", isDemo: false },

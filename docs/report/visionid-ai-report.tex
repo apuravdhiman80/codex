@@ -246,7 +246,7 @@ An image is a two-dimensional grid of samples. A video stream is a time-ordered 
 Classification assigns a label to an input. Detection predicts one or more localized instances: a class label and a rectangle around the instance. VisionID represents a box as normalized or pixel-based coordinates depending on the adapter stage. A box is commonly written as \((x,y,w,h)\), where \((x,y)\) marks its top-left corner and \(w,h\) its dimensions. Scaling and aspect ratio matter when the camera frame is resized; overlay drawing maps model coordinates back onto the displayed video.
 
 \section{Confidence, landmarks, and tracking}
-A detector score expresses how strongly the model's output favors a class for one box. It is not necessarily a calibrated probability. A face landmark is a predicted keypoint, such as an eye or mouth location, that describes geometry within a detected face. Tracking links boxes between nearby frames and assigns a temporary identifier. A track ID helps the interface refer to an object for a short time; it is neither a permanent object identity nor a person's identity.
+A detector score expresses how strongly the model's output favors a class for one box. It is not necessarily a calibrated probability. A face landmark is a predicted keypoint, such as an eye or mouth location, that describes geometry within a detected face. Tracking links boxes between nearby frames and assigns a temporary identifier. In Vision Fusion, a face box can link to a uniquely containing COCO \texttt{person} track; this geometric association is displayed separately and never supplies a face identity. A track ID helps the interface refer to an object for a short time; it is neither a permanent object identity nor a person's identity.
 
 \section{Embeddings}
 An embedding or descriptor is a numeric vector produced from a face crop by an embedding model. It represents selected visual features in a model-specific coordinate space. A matcher can compare two vectors using the metric that belongs to that model. VisionID stores descriptors only after explicit enrollment. It does not compare raw image pixels, and it discards the source camera frame after the descriptor is computed.
@@ -306,7 +306,7 @@ The runtime resizes frames to configured maximum input dimensions and asks the m
 An object result includes the class label, model class ID, score{}, and bounding box. The details panel adds a temporary track ID and first/last-seen times. The score is a model output. It should be used as an adjustable filtering signal, not as an objective probability of the object being present.
 
 \chapter{QR Architecture}
-A QR symbol carries text. For this app, QR text uses versioned JSON so that a human-readable profile can be reviewed before save. The schema requires version 1, a person ID, and a name. It accepts selected bounded text fields and plain metadata. It rejects unsupported root fields, photographs, biometric vectors, malformed data, invalid versions, duplicate IDs, and payloads above 8 KiB UTF-8.
+A QR symbol carries text. For this app, QR text uses versioned JSON so that a human-readable profile can be reviewed before save. The schema requires version 1, a person ID, and a name. It accepts selected bounded text fields and plain metadata. It rejects unsupported root fields, photographs, biometric vectors, malformed data, invalid versions, duplicate IDs (case-insensitive after NFKC normalization), and payloads above 8 KiB UTF-8. The same canonical duplicate rule is checked transactionally when profiles are saved, so stale previews from another tab cannot create conflicting visible IDs.
 
 \begin{figure}[htbp]
 \centering
@@ -347,9 +347,9 @@ Dexie provides a typed interface over the browser's IndexedDB storage. IndexedDB
 \begin{figure}[htbp]
 \centering
 \begin{tikzpicture}[node distance=14mm and 17mm]
-  \node[vboxwide] (person) {PERSON\\id, personId, name\\role, contact, metadata\\consent, isDemo};
+  \node[vboxwide] (person) {PERSON\\id, personId, canonical ID\\name, role, contact\\consent, isDemo};
   \node[vboxwide,right=of person] (template) {FACE TEMPLATE\\id, personId\\descriptor[1024]\\quality, pose, modelId};
-  \node[vboxwide,below=of template] (event) {DETECTION EVENT\\id, timestamp, type, label\\separate scores, box, mode\\isDemo};
+  \node[vboxwide,below=of template] (event) {DETECTION EVENT\\id, timestamp, type, label\\separate scores, temp person track\\box, mode, isDemo};
   \node[vboxwide,below=of person] (settings) {VISION SETTINGS\\thresholds, camera\\resolution, cadence\\overlays, retention};
   \draw[vflow] (person) -- node[above,font=\scriptsize]{one to many} (template);
   \draw[vsoftflow] (person) -- node[left,font=\scriptsize,align=center]{optional person\\reference} (event);
@@ -374,7 +374,7 @@ Model cache & Versioned public model and WASM responses & CacheStorage only; sep
 \end{tabularx}
 \end{table}
 
-Repositories validate writes and atomically remove linked records when a profile is deleted.
+Repositories validate writes and atomically remove linked records when a profile is deleted. Face-template writes check the profile in the same transaction as the template insert. Recognized-event writes also verify linked profiles transactionally and omit events whose profile was deleted; the inference view clears a cached identity if deletion wins before its last-seen update. These checks prevent a late camera result from restoring biometric templates or recognition history after deletion.
 
 \chapter{Frontend Architecture}
 The React application is divided by product responsibility rather than screen-shaped monoliths. The app shell owns navigation, skip link, current session status, and the main landmark. Pages and features own their own workflow state. Shared dialogs manage focus, escape, cancellation, and focus return; loading, empty, error, badge, and toast components standardize status without owning persistence.

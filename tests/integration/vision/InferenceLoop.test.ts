@@ -68,9 +68,8 @@ describe("serial local inference loop", () => {
       settings: { ...DEFAULT_VISION_SETTINGS, inferenceIntervalMs: 45 },
     });
     loop.start();
-    await new Promise((resolve) => setTimeout(resolve, 155));
+    await vi.waitFor(() => expect(starts.length).toBeGreaterThanOrEqual(3), { timeout: 2000 });
     await loop.stop();
-    expect(starts.length).toBeGreaterThanOrEqual(3);
     expect(starts.slice(1).every((start, index) => start - starts[index]! >= 38)).toBe(true);
     expect(engine).toBeDefined();
   });
@@ -85,6 +84,39 @@ describe("serial local inference loop", () => {
     expect(view.totalLatencyMs).toBeGreaterThanOrEqual(0);
     expect(view.objects[0]?.detectorConfidence).toBe(0.93);
     expect(dependencies.addEvents).toHaveBeenCalled();
+    await loop.stop();
+  });
+
+  it("object mode drops face and person results", async () => {
+    const result: FrameResult = {
+      ...frame,
+      faces: [{ box: { x: 0.2, y: 0.1, width: 0.2, height: 0.3 }, detectorConfidence: 0.94 }],
+      objects: [
+        { box: { x: 0.1, y: 0.2, width: 0.3, height: 0.25 }, className: "person", modelClassId: 0, detectorConfidence: 0.98 },
+        ...frame.objects,
+      ],
+    };
+    const onFrame = vi.fn();
+    const { loop, dependencies } = makeLoop({
+      engine: {
+        detect: vi.fn(async () => result),
+        status: () => ({ state: "ready" as const, message: "Ready", progress: 1, activeModels: ["COCO-SSD Lite"] }),
+        similarity: () => { throw new Error("Object mode must not request face matching."); },
+      } as unknown as VisionEngine,
+      mode: "objects",
+      onFrame,
+    });
+
+    loop.start();
+    await vi.waitFor(() => expect(onFrame).toHaveBeenCalled());
+    const view = onFrame.mock.calls[0]![0];
+
+    expect(view.faces).toEqual([]);
+    expect(view.objects.map((object: { className: string }) => object.className)).toEqual(["bottle"]);
+    expect(dependencies.listProfiles).not.toHaveBeenCalled();
+    expect(dependencies.addEvents).toHaveBeenCalledWith([
+      expect.objectContaining({ type: "object_detected", label: "bottle" }),
+    ]);
     await loop.stop();
   });
 
@@ -124,6 +156,54 @@ describe("serial local inference loop", () => {
       expect.objectContaining({ type: "unknown_face", detectorConfidence: 0.89 }),
       expect.objectContaining({ type: "object_detected", detectorConfidence: 0.93 }),
     ]));
+    await loop.stop();
+  });
+
+  it.each([
+    {
+      name: "a uniquely containing person track",
+      objects: [{ box: { x: 0.1, y: 0.05, width: 0.5, height: 0.9 }, className: "person", modelClassId: 0, detectorConfidence: 0.92 }],
+      expected: "person",
+    },
+    {
+      name: "no person track",
+      objects: [{ box: { x: 0.6, y: 0.5, width: 0.15, height: 0.2 }, className: "bottle", modelClassId: 39, detectorConfidence: 0.92 }],
+      expected: undefined,
+    },
+    {
+      name: "ambiguous overlapping person tracks",
+      objects: [
+        { box: { x: 0.1, y: 0.05, width: 0.5, height: 0.9 }, className: "person", modelClassId: 0, detectorConfidence: 0.92 },
+        { box: { x: 0.1, y: 0.05, width: 0.5, height: 0.9 }, className: "person", modelClassId: 0, detectorConfidence: 0.91 },
+      ],
+      expected: undefined,
+    },
+  ])("associatesFacesWithOnlyUnambiguousPersonTracks: $name", async ({ objects, expected }) => {
+    const result: FrameResult = {
+      ...frame,
+      faces: [{ box: { x: 0.2, y: 0.1, width: 0.15, height: 0.18 }, detectorConfidence: 0.94 }],
+      objects,
+    };
+    const onFrame = vi.fn();
+    const engine = {
+      detect: vi.fn(async () => result),
+      status: () => ({ state: "ready" as const, message: "Ready", progress: 1, activeModels: [] }),
+      similarity: () => 0.9,
+    } as unknown as VisionEngine;
+    const { loop, dependencies } = makeLoop({ engine, onFrame, settings: { ...DEFAULT_VISION_SETTINGS, inferenceIntervalMs: 1000 } });
+    loop.start();
+    await vi.waitFor(() => expect(onFrame).toHaveBeenCalled());
+    const view = onFrame.mock.calls[0]![0];
+    const associated = view.faces[0]?.associatedPersonTrackId;
+    if (expected === "person") {
+      expect(associated).toBe(view.objects.find((object: { className: string; trackId: string }) => object.className === "person")?.trackId);
+      expect(associated).toBeTruthy();
+      expect(dependencies.addEvents).toHaveBeenCalledWith(expect.arrayContaining([
+        expect.objectContaining({ type: "unknown_face", associatedPersonTrackId: associated }),
+      ]));
+    } else {
+      expect(associated).toBeUndefined();
+    }
     await loop.stop();
   });
 

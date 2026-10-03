@@ -1,7 +1,9 @@
 import type { Config as HumanConfig, Human } from "@vladmandic/human";
 import type { VisionSettings } from "../../types/vision";
 import { DEFAULT_VISION_SETTINGS, normalizeVisionSettings, VISION_CONFIG } from "../../config/vision";
-import { validateBoundingBox } from "../../data/migrations";
+import { getInputDimensions, makeNormalizedBox, mapObjects, toCocoInput } from "./objectDetection";
+import type { ObjectDetectorRuntime } from "./objectDetection";
+import { loadCocoObjectDetector } from "./objectDetector";
 import {
   getModelBaseUrl,
   getObjectModelUrl,
@@ -35,40 +37,11 @@ export interface HumanRuntime {
   backend?: "webgl" | "wasm" | "cpu";
 }
 
-export interface ObjectDetectionOutput {
-  bbox: [number, number, number, number];
-  class: string;
-  score: number;
-}
-
-export interface ObjectDetectorRuntime {
-  detect(
-    input: HTMLVideoElement | HTMLCanvasElement | OffscreenCanvas,
-    maxNumBoxes: number,
-    minScore: number,
-  ): Promise<ObjectDetectionOutput[]>;
-  dispose?(): void;
-  backend?: "webgl" | "wasm" | "cpu";
-}
-
 export interface EngineDependencies {
   createHuman(config: Partial<HumanConfig>): Promise<HumanRuntime> | HumanRuntime;
   loadObjectDetector(modelUrl: string, wasmBaseUrl: string): Promise<ObjectDetectorRuntime>;
   now(): number;
 }
-
-const COCO_CLASS_LABELS = [
-  "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat", "traffic light",
-  "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow",
-  "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee",
-  "skis", "snowboard", "sports ball", "kite", "baseball bat", "baseball glove", "skateboard", "surfboard",
-  "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", "apple",
-  "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair", "couch",
-  "potted plant", "bed", "dining table", "toilet", "tv", "laptop", "mouse", "remote", "keyboard",
-  "cell phone", "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors",
-  "teddy bear", "hair drier", "toothbrush",
-] as const;
-const COCO_CLASS_IDS = new Map<string, number>(COCO_CLASS_LABELS.map((label, index) => [label, index]));
 
 export function buildHumanConfig(modelBasePath: string, backend: "webgl" | "wasm" | "cpu" = "webgl"): Partial<HumanConfig> {
   return {
@@ -140,97 +113,8 @@ function defaultDependencies(): EngineDependencies {
         reset: () => runtime.reset(),
       };
     },
-    loadObjectDetector: async (modelUrl, wasmBaseUrl) => {
-      const tf = await import("@tensorflow/tfjs-core");
-      let backend: "webgl" | "wasm" | "cpu" = "webgl";
-      await import("@tensorflow/tfjs-backend-webgl");
-      try {
-        const ready = await tf.setBackend("webgl");
-        if (!ready) throw new Error("WebGL backend is unavailable");
-        await tf.ready();
-      } catch {
-        try {
-          const wasm = await import("@tensorflow/tfjs-backend-wasm");
-          wasm.setWasmPaths(wasmBaseUrl);
-          const ready = await tf.setBackend("wasm");
-          if (!ready) throw new Error("WASM backend is unavailable");
-          backend = "wasm";
-          await tf.ready();
-        } catch {
-          await import("@tensorflow/tfjs-backend-cpu");
-          const ready = await tf.setBackend("cpu");
-          if (!ready) throw new Error("No supported TensorFlow.js backend is available");
-          backend = "cpu";
-          await tf.ready();
-        }
-      }
-      const coco = await import("@tensorflow-models/coco-ssd");
-      const model = await coco.load({ base: "lite_mobilenet_v2", modelUrl });
-      return {
-        backend,
-        detect: (input, maxNumBoxes, minScore) => model.detect(input as HTMLVideoElement, maxNumBoxes, minScore),
-        dispose: () => model.dispose(),
-      };
-    },
+    loadObjectDetector: loadCocoObjectDetector,
   };
-}
-
-function getDimensions(input: ImageBitmap | HTMLVideoElement): { width: number; height: number } {
-  const video = input as HTMLVideoElement;
-  const width = "videoWidth" in input ? video.videoWidth : input.width;
-  const height = "videoHeight" in input ? video.videoHeight : input.height;
-  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
-    throw new Error("Vision frame has no readable dimensions.");
-  }
-  return { width, height };
-}
-
-function toCocoInput(
-  input: ImageBitmap | HTMLVideoElement,
-  width: number,
-  height: number,
-): HTMLVideoElement | HTMLCanvasElement | OffscreenCanvas {
-  if ("videoWidth" in input) return input as HTMLVideoElement;
-  const bitmap = input as ImageBitmap;
-  if (typeof OffscreenCanvas !== "undefined") {
-    const canvas = new OffscreenCanvas(width, height);
-    const context = canvas.getContext("2d");
-    if (!context) throw new Error("A canvas is required to process the current frame.");
-    context.drawImage(bitmap, 0, 0, width, height);
-    return canvas;
-  }
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  const context = canvas.getContext("2d");
-  if (!context) throw new Error("A canvas is required to process the current frame.");
-  context.drawImage(bitmap, 0, 0, width, height);
-  return canvas;
-}
-
-function makeNormalizedBox(values: number[] | undefined, inputWidth: number, inputHeight: number, normalized: boolean) {
-  if (!values || values.length < 4 || values.slice(0, 4).some((value) => !Number.isFinite(value))) return undefined;
-  const divisorX = normalized ? 1 : inputWidth;
-  const divisorY = normalized ? 1 : inputHeight;
-  const rawX = values[0] / divisorX;
-  const rawY = values[1] / divisorY;
-  const rawWidth = values[2] / divisorX;
-  const rawHeight = values[3] / divisorY;
-  const x = Math.max(0, Math.min(1, rawX));
-  const y = Math.max(0, Math.min(1, rawY));
-  const right = Math.max(x, Math.min(1, rawX + rawWidth));
-  const bottom = Math.max(y, Math.min(1, rawY + rawHeight));
-  if (right <= x || bottom <= y) return undefined;
-  try {
-    return validateBoundingBox({
-      x,
-      y,
-      width: x === rawX && right === rawX + rawWidth ? rawWidth : right - x,
-      height: y === rawY && bottom === rawY + rawHeight ? rawHeight : bottom - y,
-    });
-  } catch {
-    return undefined;
-  }
 }
 
 function mapFaces(faceOutputs: HumanFaceOutput[] | undefined, width: number, height: number) {
@@ -259,26 +143,6 @@ function mapFaces(faceOutputs: HumanFaceOutput[] | undefined, width: number, hei
     });
   }
   return faces;
-}
-
-function mapObjects(outputs: ObjectDetectionOutput[] | undefined, width: number, height: number) {
-  const objects = [];
-  for (const output of outputs ?? []) {
-    const className = typeof output.class === "string" ? output.class.trim().toLowerCase() : "";
-    const modelClassId = COCO_CLASS_IDS.get(className);
-    const confidence = output.score;
-    const box = makeNormalizedBox(output.bbox, width, height, false);
-    if (
-      modelClassId === undefined ||
-      !box ||
-      typeof confidence !== "number" ||
-      !Number.isFinite(confidence) ||
-      confidence < 0 ||
-      confidence > 1
-    ) continue;
-    objects.push({ box, className, modelClassId, detectorConfidence: confidence });
-  }
-  return objects;
 }
 
 export class HumanVisionEngine implements VisionEngine {
@@ -373,7 +237,7 @@ export class HumanVisionEngine implements VisionEngine {
     const objects = this.objectDetector;
     if (!human || !objects) throw new Error("Vision model adapter is incomplete.");
     const inferenceStartedAt = this.dependencies.now();
-    const { width, height } = getDimensions(input);
+    const { width, height } = getInputDimensions(input);
     const faceOutput = await human.detect(input);
     const objectOutput = await objects.detect(toCocoInput(input, width, height), VISION_CONFIG.maxDetectedObjects, this.settings.objectThreshold);
     const inferenceFinishedAt = this.dependencies.now();

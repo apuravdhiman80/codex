@@ -14,14 +14,8 @@ const routeModules = import.meta.glob<RouterModule>("/src/app/router.tsx", {
 const routerModule = routeModules["/src/app/router.tsx"];
 
 const routeCases = [
-  { path: "/", heading: "VisionID AI" },
-  { path: "/console", heading: "Vision Fusion Console" },
+  { path: "/", heading: "Object Detection Console" },
   { path: "/objects", heading: "Object Detection Console" },
-  { path: "/enroll", heading: "Enroll a Person" },
-  { path: "/people", heading: "People Directory" },
-  { path: "/people/demo-person", heading: "Person Profile" },
-  { path: "/history", heading: "Detection History" },
-  { path: "/settings", heading: "Settings" },
 ];
 
 describe("application routes", () => {
@@ -46,12 +40,10 @@ describe("application routes", () => {
     expect(routerModule, "src/app/router.tsx should export appRouter").toBeDefined();
     if (!routerModule) return;
 
-    const router = createMemoryRouter(routerModule.appRouter.routes, {
-      initialEntries: ["/not-a-visionid-route"],
-    });
+    const router = createMemoryRouter(routerModule.appRouter.routes, { initialEntries: ["/people"] });
     render(<RouterProvider router={router} />);
 
     expect(await screen.findByRole("heading", { level: 1, name: /isn’t on the map/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /return to overview/i })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: /return to object detection/i })).toHaveAttribute("href", "/");
   });
 });

@@ -31,7 +31,7 @@ function cameraStatusText(status: CameraStatus): string {
 
 export function VisionConsolePage({ mode: fixedMode, services: serviceOverrides }: VisionConsolePageProps) {
   const services = useMemo(() => resolveVisionConsoleServices(serviceOverrides), [serviceOverrides]);
-  const [engine] = useState<VisionEngine>(() => services.createEngine(DEFAULT_VISION_SETTINGS));
+  const [engine] = useState<VisionEngine>(() => services.createEngine(DEFAULT_VISION_SETTINGS, fixedMode ?? "fusion"));
   const videoRef = useRef<HTMLVideoElement>(null);
   const sessionRef = useRef<CameraSession | undefined>(undefined);
   const loopRef = useRef<InferenceLoop | undefined>(undefined);
@@ -100,18 +100,26 @@ export function VisionConsolePage({ mode: fixedMode, services: serviceOverrides 
     try {
       if (!settingsReady) await services.getSettings().then(setSettings);
       if (!videoRef.current) throw new Error("Camera preview is not ready. Retry after this page finishes loading.");
-      if (!initializedRef.current) {
-        await loadVisionEngine(engine, setEngineStatus);
-        initializedRef.current = true;
-        setEngineStatus(engine.status());
-      }
-      await engine.configure(settings);
-      const session = await services.camera.startCamera(videoRef.current, cameraId
+      const modelInitialization: Promise<{ ok: true } | { ok: false; error: unknown }> = initializedRef.current
+        ? Promise.resolve({ ok: true })
+        : loadVisionEngine(engine, setEngineStatus).then(
+          () => ({ ok: true as const }),
+          (cause: unknown) => ({ ok: false as const, error: cause }),
+        );
+      const cameraInitialization = services.camera.startCamera(videoRef.current, cameraId
         ? { deviceId: cameraId, width: settings.maxInputWidth, height: settings.maxInputHeight }
         : { facingMode, width: settings.maxInputWidth, height: settings.maxInputHeight });
+      const session = await cameraInitialization;
       sessionRef.current = session;
-      void services.camera.enumerateCameras().then(setCameras);
+      setRunning(true);
       publishSessionMetrics({ cameraActive: true, measuredFps: null, inferenceLatencyMs: null, totalLatencyMs: null, capturedAt: null });
+
+      const modelResult = await modelInitialization;
+      if (!modelResult.ok) throw modelResult.error;
+      initializedRef.current = true;
+      setEngineStatus(engine.status());
+      await engine.configure(settings);
+      void services.camera.enumerateCameras().then(setCameras);
       const loopDependencies: InferenceLoopDependencies = {
         video: videoRef.current,
         engine,
@@ -167,12 +175,12 @@ export function VisionConsolePage({ mode: fixedMode, services: serviceOverrides 
   }
 
   const pageTitle = isObjectOnly ? "Object Detection Console" : "Vision Fusion Console";
-  const statusLabel = engineStatus.state === "ready" ? "AI ENGINE READY" : engineStatus.state === "loading" ? "AI INITIALIZING" : engineStatus.state === "error" ? "AI ERROR" : "AI STANDBY";
+  const statusLabel = engineStatus.state === "ready" ? "OBJECT DETECTOR READY" : engineStatus.state === "loading" ? "LOADING OBJECT DETECTOR" : engineStatus.state === "error" ? "DETECTOR ERROR" : "DETECTOR STANDBY";
 
   return (
     <section className="vision-console-page" aria-labelledby="vision-console-heading">
       <header className="vision-console-heading">
-        <div><p className="eyebrow">LOCAL COMPUTER VISION · {isObjectOnly ? "OBJECT DETECTION" : "VISION FUSION"}</p><h1 id="vision-console-heading">{pageTitle}</h1><p>{isObjectOnly ? "Object-only mode runs the real local detector and lists each class, score, bounding box, and temporary track." : "Real browser-side inference. Camera frames stay on this device; identity matches use only opted-in enrolled profiles."}</p></div>
+        <div><p className="eyebrow">LOCAL OBJECT DETECTION</p><h1 id="vision-console-heading">{pageTitle}</h1><p>Detect supported objects locally. Person detections are excluded; camera frames stay on this device.</p></div>
         <div className="engine-state-pill" role="status"><span className={`status-dot ${engineStatus.state === "ready" ? "status-dot-active" : ""}`} />{statusLabel}</div>
       </header>
 
@@ -212,7 +220,7 @@ export function VisionConsolePage({ mode: fixedMode, services: serviceOverrides 
         <aside className="vision-results-column" aria-label="Current vision results">
           <div className="vision-side-status"><span className={`status-dot ${cameraStatus.state === "active" ? "status-dot-active" : ""}`} />{cameraStatusText(cameraStatus)}<span className="vision-side-divider">·</span>{statusLabel}</div>
           <ResultPanel frame={frame} objectOnly={isObjectOnly} />
-          <div className="privacy-notice vision-privacy-notice" role="note"><strong>Privacy boundary</strong> Frames are processed locally and are never stored. Enrolled face descriptors stay in this browser profile. Recognition is not authentication; quality checks do not verify liveness.</div>
+          <div className="privacy-notice vision-privacy-notice" role="note"><strong>Object-only mode</strong> Frames are processed on this device and are not stored. Person detections and face recognition are disabled.</div>
         </aside>
       </div>
     </section>

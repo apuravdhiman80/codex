@@ -20,7 +20,7 @@ export function VisionControls({
   onModeChange, onFacingModeChange, onCameraChange, onStart, onStop,
 }: VisionControlsProps) {
   return (
-    <section className="vision-controls" aria-label="Camera and AI controls">
+    <section className="vision-controls" aria-label="Object detection controls">
       {!fixedMode && <div className="mode-control" role="group" aria-label="Vision mode">
         <button type="button" aria-pressed={mode === "fusion"} className={mode === "fusion" ? "mode-button mode-button-active" : "mode-button"} disabled={running} onClick={() => onModeChange("fusion")}>Vision Fusion</button>
         <button type="button" aria-pressed={mode === "recognition"} className={mode === "recognition" ? "mode-button mode-button-active" : "mode-button"} disabled={running} onClick={() => onModeChange("recognition")}>Recognition only</button>
@@ -39,8 +39,8 @@ export function VisionControls({
         </label>
       </div>
       {running
-        ? <button className="button-danger vision-run-button" type="button" onClick={onStop}>Stop vision</button>
-        : <button className="button-primary vision-run-button" type="button" disabled={busy} onClick={onStart}>{busy ? "Preparing AI…" : "Start vision"}</button>}
+        ? <button className="button-danger vision-run-button" type="button" onClick={onStop}>Stop detection</button>
+        : <button className="button-primary vision-run-button" type="button" disabled={busy} onClick={onStart}>{busy ? "Loading object detector…" : "Start object detection"}</button>}
     </section>
   );
 }

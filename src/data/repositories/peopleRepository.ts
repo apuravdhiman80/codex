@@ -1,5 +1,6 @@
 import { appDatabase, createLocalId, DataLayerError, ensureDatabaseReady, toDataLayerError } from "../db";
 import type { CreatePersonInput, PersonProfile, PersonProfilePatch } from "../../types/person";
+import { normalizePersonId } from "../../utils/personId";
 
 const FIELD_LIMITS = {
   personId: 64,
@@ -54,7 +55,7 @@ function normalizeMetadata(value: unknown): Record<string, string> {
 }
 
 function normalizeProfileFields(input: CreatePersonInput): Omit<PersonProfile, "id" | "createdAt" | "updatedAt"> {
-  const personId = text(input.personId, "Person ID", FIELD_LIMITS.personId, true);
+  const personId = text(input.personId, "Person ID", FIELD_LIMITS.personId, true).normalize("NFC");
   const name = text(input.name, "Name", FIELD_LIMITS.name, true);
   const email = text(input.email, "Email", FIELD_LIMITS.email);
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(email)) {
@@ -70,6 +71,7 @@ function normalizeProfileFields(input: CreatePersonInput): Omit<PersonProfile, "
   const metadata = normalizeMetadata(input.metadata);
   return {
     personId,
+    personIdCanonical: normalizePersonId(personId),
     name,
     role: text(input.role, "Role", FIELD_LIMITS.role),
     department: text(input.department, "Department", FIELD_LIMITS.department),
@@ -119,8 +121,12 @@ export async function createProfile(input: CreatePersonInput): Promise<PersonPro
   };
   await ensureDatabaseReady();
   try {
-    await appDatabase.people.add(profile);
-    return profile;
+    return await appDatabase.transaction("rw", appDatabase.people, async () => {
+      const duplicate = await appDatabase.people.where("personIdCanonical").equals(fields.personIdCanonical!).first();
+      if (duplicate) throw new DataLayerError("conflict", "A profile with this person ID already exists.");
+      await appDatabase.people.add(profile);
+      return profile;
+    });
   } catch (error) {
     throw toDataLayerError(error);
   }
@@ -139,16 +145,30 @@ export async function updateProfile(id: string, patch: PersonProfilePatch): Prom
   validatePatch(patch);
   await ensureDatabaseReady();
   try {
-    const current = await appDatabase.people.get(id);
-    if (!current) throw new DataLayerError("not_found", "Person profile was not found.");
-    const updated: PersonProfile = {
-      ...current,
-      ...patch,
-      metadata: patch.metadata === undefined ? current.metadata : normalizeMetadata(patch.metadata),
-      updatedAt: Date.now(),
-    };
-    await appDatabase.people.put(updated);
-    return updated;
+    return await appDatabase.transaction("rw", appDatabase.people, async () => {
+      const current = await appDatabase.people.get(id);
+      if (!current) throw new DataLayerError("not_found", "Person profile was not found.");
+      const personId = patch.personId === undefined
+        ? current.personId
+        : text(patch.personId, "Person ID", FIELD_LIMITS.personId, true).normalize("NFC");
+      const personIdCanonical = normalizePersonId(personId);
+      if (patch.personId !== undefined && personIdCanonical !== (current.personIdCanonical ?? normalizePersonId(current.personId))) {
+        const duplicate = await appDatabase.people.where("personIdCanonical").equals(personIdCanonical).first();
+        if (duplicate && duplicate.id !== current.id) {
+          throw new DataLayerError("conflict", "A profile with this person ID already exists.");
+        }
+      }
+      const updated: PersonProfile = {
+        ...current,
+        ...patch,
+        personId,
+        personIdCanonical,
+        metadata: patch.metadata === undefined ? current.metadata : normalizeMetadata(patch.metadata),
+        updatedAt: Date.now(),
+      };
+      await appDatabase.people.put(updated);
+      return updated;
+    });
   } catch (error) {
     throw toDataLayerError(error);
   }

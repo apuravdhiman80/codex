@@ -49,10 +49,11 @@ export function drawDetectionOverlay(
   context.clearRect(0, 0, width, height);
   if (!frame) return;
   if (overlays.faces) {
-    for (const { face, decision, profile, trackId } of frame.faces) {
+    for (const { face, decision, profile, trackId, associatedPersonTrackId } of frame.faces) {
+      const personTrackLabel = associatedPersonTrackId ? ` · Person #${associatedPersonTrackId}` : "";
       const label = decision.status === "recognized" && profile
-        ? `${profile.name} · Match ${Math.round(decision.similarity * 100)}% · Face ${Math.round(face.detectorConfidence * 100)}% · #${trackId || "?"}`
-        : `Unknown · Face ${Math.round(face.detectorConfidence * 100)}% · #${trackId || "?"}`;
+        ? `${profile.name} · Match ${Math.round(decision.similarity * 100)}% · Face ${Math.round(face.detectorConfidence * 100)}% · #${trackId || "?"}${personTrackLabel}`
+        : `Unknown · Face ${Math.round(face.detectorConfidence * 100)}% · #${trackId || "?"}${personTrackLabel}`;
       paintBox(context, face.box, width, height, decision.status === "recognized" ? "#44d5cb" : "#f2bd63", label);
       if (overlays.landmarks && face.landmarks?.length) {
         context.fillStyle = "rgba(255, 255, 255, 0.72)";

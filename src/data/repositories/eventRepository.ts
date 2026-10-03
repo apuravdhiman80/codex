@@ -7,8 +7,15 @@ export async function addEvents(events: NewDetectionEvent[]): Promise<DetectionE
   const rows = events.map(validateDetectionEvent);
   await ensureDatabaseReady();
   try {
-    await appDatabase.events.bulkAdd(rows);
-    return rows;
+    return await appDatabase.transaction("rw", appDatabase.people, appDatabase.events, async () => {
+      const profileIds = [...new Set(rows.flatMap((row) => row.personId ? [row.personId] : []))];
+      const existingIds = new Set(profileIds.length
+        ? await appDatabase.people.where("id").anyOf(profileIds).primaryKeys()
+        : []);
+      const linkedRows = rows.filter((row) => !row.personId || existingIds.has(row.personId));
+      if (linkedRows.length) await appDatabase.events.bulkAdd(linkedRows);
+      return linkedRows;
+    });
   } catch (error) {
     throw toDataLayerError(error);
   }

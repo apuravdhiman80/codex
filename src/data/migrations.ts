@@ -3,7 +3,7 @@ import type { DetectionEvent, NewDetectionEvent } from "../types/events";
 import type { FaceTemplate } from "../types/person";
 import type { BoundingBox, PersistedVisionSettings, VisionSettings } from "../types/vision";
 
-export const CURRENT_SCHEMA_VERSION = 2;
+export const CURRENT_SCHEMA_VERSION = 3;
 export const FACE_DESCRIPTOR_LENGTH = VISION_CONFIG.faceDescriptorLength;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -96,6 +96,9 @@ export function validateDetectionEvent(
   if (value.trackId !== undefined && (typeof value.trackId !== "string" || value.trackId.length > 64)) {
     throw new Error("Detection event track id is invalid");
   }
+  if (value.associatedPersonTrackId !== undefined && (typeof value.associatedPersonTrackId !== "string" || value.associatedPersonTrackId.length > 64)) {
+    throw new Error("Detection event person track id is invalid");
+  }
   return {
     id: typeof value.id === "string" && value.id.length > 0 ? value.id : crypto.randomUUID(),
     timestamp,
@@ -103,6 +106,7 @@ export function validateDetectionEvent(
     label: value.label.trim(),
     ...(value.personId ? { personId: value.personId as string } : {}),
     ...(value.trackId ? { trackId: value.trackId as string } : {}),
+    ...(value.associatedPersonTrackId ? { associatedPersonTrackId: value.associatedPersonTrackId as string } : {}),
     ...(detectorConfidence === undefined ? {} : { detectorConfidence }),
     ...(recognitionSimilarity === undefined ? {} : { recognitionSimilarity }),
     ...(value.boundingBox === undefined ? {} : { boundingBox: validateBoundingBox(value.boundingBox) }),

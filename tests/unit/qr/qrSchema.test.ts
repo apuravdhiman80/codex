@@ -63,6 +63,14 @@ describe("person QR payload", () => {
     expect(result).toMatchObject({ ok: false, error: { code: "duplicate_id" } });
   });
 
+  it("rejectsCaseAndUnicodeEquivalentIds", () => {
+    const result = parsePersonQr(
+      JSON.stringify({ version: 1, person_id: "cafe\u0301-01", name: "Asha" }),
+      ["Café-01"],
+    );
+    expect(result).toMatchObject({ ok: false, error: { code: "duplicate_id" } });
+  });
+
   it("roundTripsGeneratedQr", () => {
     const encoded = createPersonQr(valid);
     expect(parsePersonQr(encoded)).toEqual({ ok: true, value: valid });

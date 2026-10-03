@@ -1,5 +1,6 @@
 import { VISION_CONFIG } from "../../config/vision";
 import type { PersonMetadata } from "../../types/person";
+import { normalizePersonId } from "../../utils/personId";
 
 export interface ValidatedPersonPayload {
   version: 1;
@@ -139,7 +140,7 @@ function parse(payload: string, existingIds: string[]): ValidatedPersonPayload {
 
   const personId = plainText(decoded.person_id, "person_id", limits.personId, true)!;
   const name = plainText(decoded.name, "name", limits.name, true)!;
-  if (existingIds.some((id) => id.trim().toLocaleLowerCase() === personId.toLocaleLowerCase())) {
+  if (existingIds.some((id) => normalizePersonId(id) === normalizePersonId(personId))) {
     throw new QrValidationError("duplicate_id", "A person with this ID is already registered.", "person_id");
   }
 

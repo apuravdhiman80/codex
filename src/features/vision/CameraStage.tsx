@@ -57,7 +57,7 @@ export function CameraStage({ videoRef, frame, overlays, cameraActive, busy, pla
         {!cameraActive && <div className="camera-stage-placeholder"><span className="camera-stage-icon" aria-hidden="true">⌗</span><p>{placeholder}</p>{busy && <span role="status">Preparing local vision models…</span>}</div>}
         {cameraActive && <div className="camera-stage-live"><span className="status-dot status-dot-active" /> CAMERA ACTIVE · LOCAL PROCESSING</div>}
       </div>
-      <p className="camera-stage-caption">Frames remain in browser memory. Detection boxes use model output; identity labels require enrolled descriptors.</p>
+      <p className="camera-stage-caption">Frames stay in browser memory. Person detections are excluded; labels are limited to the detector’s supported classes.</p>
     </section>
   );
 }

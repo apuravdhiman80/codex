@@ -4,6 +4,8 @@ export type PersonMetadata = Record<string, string>;
 export interface PersonProfile {
   id: string;
   personId: string;
+  /** Indexed canonical lookup key; optional only for in-memory legacy fixtures. */
+  personIdCanonical?: string;
   name: string;
   role: string;
   department: string;

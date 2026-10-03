@@ -1,13 +1,14 @@
 import type { DetectionEvent } from "../../types/events";
 import type { PersonProfile } from "../../types/person";
+import { normalizePersonId } from "../../utils/personId";
 
 const seedTimestamp = Date.now();
 
 /** Entirely fictional records; intentionally no portraits, biometric templates, or contact data. */
 export const DEMO_PEOPLE: readonly PersonProfile[] = [
-  { id: "demo-person-01", personId: "DEMO-01", name: "Demo User 01", role: "Visitor", department: "Demo Lab", organization: "VisionID Sample", metadata: {}, createdAt: seedTimestamp, updatedAt: seedTimestamp, consentRecordedAt: seedTimestamp, isDemo: true },
-  { id: "demo-person-02", personId: "DEMO-02", name: "Demo User 02", role: "Student", department: "Computer Vision", organization: "VisionID Sample", metadata: {}, createdAt: seedTimestamp, updatedAt: seedTimestamp, consentRecordedAt: seedTimestamp, isDemo: true },
-  { id: "demo-person-03", personId: "DEMO-03", name: "Demo User 03", role: "Researcher", department: "AI Systems", organization: "VisionID Sample", metadata: {}, createdAt: seedTimestamp, updatedAt: seedTimestamp, consentRecordedAt: seedTimestamp, isDemo: true },
+  { id: "demo-person-01", personId: "DEMO-01", personIdCanonical: normalizePersonId("DEMO-01"), name: "Demo User 01", role: "Visitor", department: "Demo Lab", organization: "VisionID Sample", metadata: {}, createdAt: seedTimestamp, updatedAt: seedTimestamp, consentRecordedAt: seedTimestamp, isDemo: true },
+  { id: "demo-person-02", personId: "DEMO-02", personIdCanonical: normalizePersonId("DEMO-02"), name: "Demo User 02", role: "Student", department: "Computer Vision", organization: "VisionID Sample", metadata: {}, createdAt: seedTimestamp, updatedAt: seedTimestamp, consentRecordedAt: seedTimestamp, isDemo: true },
+  { id: "demo-person-03", personId: "DEMO-03", personIdCanonical: normalizePersonId("DEMO-03"), name: "Demo User 03", role: "Researcher", department: "AI Systems", organization: "VisionID Sample", metadata: {}, createdAt: seedTimestamp, updatedAt: seedTimestamp, consentRecordedAt: seedTimestamp, isDemo: true },
 ];
 
 export function createDemoEvents(now = Date.now()): Array<Omit<DetectionEvent, "id">> {

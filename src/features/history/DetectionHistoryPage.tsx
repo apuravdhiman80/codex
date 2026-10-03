@@ -30,6 +30,7 @@ function EventDetail({ event }: { event: DetectionEvent }) {
         <div><dt>Event ID</dt><dd>{event.id}</dd></div>
         {event.personId && <div><dt>Person record</dt><dd>{event.personId}</dd></div>}
         {event.trackId && <div><dt>Temporary track</dt><dd>{event.trackId}</dd></div>}
+        {event.associatedPersonTrackId && <div><dt>Associated person track</dt><dd>{event.associatedPersonTrackId} (temporary; not an identity)</dd></div>}
         {event.boundingBox && <div><dt>Bounding box (normalized)</dt><dd>{[event.boundingBox.x, event.boundingBox.y, event.boundingBox.width, event.boundingBox.height].map((value) => value.toFixed(3)).join(" · ")}</dd></div>}
         {event.detectorConfidence !== undefined && <div><dt>Detection confidence</dt><dd>{(event.detectorConfidence * 100).toFixed(1)}%</dd></div>}
         {event.recognitionSimilarity !== undefined && <div><dt>Recognition similarity</dt><dd>{(event.recognitionSimilarity * 100).toFixed(1)}%</dd></div>}

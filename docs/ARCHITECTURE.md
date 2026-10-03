@@ -60,9 +60,10 @@ Vercel rewrites client routes to `index.html`; a refresh on `/settings` or `/peo
 3. The worker creates a capped `ImageBitmap`, runs face and COCO object modules, returns typed boxes/scores/descriptors, and closes the bitmap.
 4. Object detector confidence is preserved as `detectorConfidence`. Face identity comparison is a separate `recognitionSimilarity` produced by the matcher.
 5. Every face is matched independently to non-demo enrolled templates. Below-threshold or ambiguous candidates remain Unknown.
-6. Tracking assigns short-lived IDs to detections; IDs are not identities. Event aggregation prevents a row per rendered frame.
-7. Events and optional last-seen profile timestamps go through Dexie repositories. The console derives FPS and latency from actual timestamps.
-8. Stop, route change, device removal, and clear-all invalidate active work, stop media tracks, and discard frames.
+6. Tracking assigns short-lived IDs to detections; IDs are not identities. In Fusion mode, a face box is associated with a COCO `person` track only when one track contains it unambiguously. The temporary link is shown separately and does not affect recognition.
+7. Event aggregation prevents a row per rendered frame. Event writes transactionally discard person-linked events if their profile was deleted, and descriptor saves recheck the profile in the same transaction as the template write.
+8. Optional last-seen profile timestamps go through Dexie repositories. If deletion wins while a frame is in flight, the result is downgraded to Unknown before display. The console derives FPS and latency from actual timestamps.
+9. Stop, route change, device removal, and clear-all invalidate active work, stop media tracks, and discard frames.
 
 ## Data model
 
@@ -73,7 +74,8 @@ erDiagram
   VISION_SETTINGS ||--o{ APP_INSTANCE : configures
   PERSON {
     string id PK
-    string personId UK
+    string personId
+    string personIdCanonical logical_UK
     string name
     string role
     string department
@@ -94,6 +96,7 @@ erDiagram
     datetime timestamp
     string type
     string label
+    string associatedPersonTrackId_optional
     float detectorConfidence_optional
     float recognitionSimilarity_optional
     json boundingBox_optional
@@ -108,11 +111,11 @@ erDiagram
   }
 ```
 
-`PersonProfile` is linked to multiple `FaceTemplate` rows and detection events. Person deletion is transactional and removes linked templates and events. Settings are validated and stored as one current row. IndexedDB is local to a browser profile; there is no cloud backup.
+`PersonProfile` is linked to multiple `FaceTemplate` rows and detection events. A versioned schema migration populates `personIdCanonical` using trimmed NFKC plus uppercase normalization. Create and edit operations check this index inside a read-write transaction, so case or Unicode-equivalent visible IDs cannot be saved concurrently. Person deletion is transactional and removes linked templates and events; stale in-flight template and event writes also verify the profile in a transaction. Settings are validated and stored as one current row. IndexedDB is local to a browser profile; there is no cloud backup.
 
 ## QR contract
 
-Version 1 QR text is JSON with required `version: 1`, `person_id`, and `name`; optional role, department, email, phone, organization, and bounded plain-text metadata are accepted. Payloads are limited to 8 KiB UTF-8. Unknown root fields, photos, descriptors, invalid email, duplicate IDs, and unsupported versions are rejected before preview. Scanning does not save a profile; user review and a separate consent action are required.
+Version 1 QR text is JSON with required `version: 1`, `person_id`, and `name`; optional role, department, email, phone, organization, and bounded plain-text metadata are accepted. Payloads are limited to 8 KiB UTF-8. Unknown root fields, photos, descriptors, invalid email, case/Unicode-equivalent duplicate IDs, and unsupported versions are rejected before preview. Scanning does not save a profile; user review and a separate consent action are required.
 
 ## Model and delivery boundary
 

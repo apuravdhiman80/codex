@@ -10,6 +10,7 @@ export interface SafeEventExport {
   label: string;
   personId?: string;
   trackId?: string;
+  associatedPersonTrackId?: string;
   detectorConfidence?: number;
   recognitionSimilarity?: number;
   boundingBox?: DetectionEvent["boundingBox"];
@@ -26,6 +27,7 @@ export function toSafeEventExport(event: DetectionEvent): SafeEventExport {
     label: event.label,
     ...(event.personId ? { personId: event.personId } : {}),
     ...(event.trackId ? { trackId: event.trackId } : {}),
+    ...(event.associatedPersonTrackId ? { associatedPersonTrackId: event.associatedPersonTrackId } : {}),
     ...(event.detectorConfidence !== undefined ? { detectorConfidence: event.detectorConfidence } : {}),
     ...(event.recognitionSimilarity !== undefined ? { recognitionSimilarity: event.recognitionSimilarity } : {}),
     ...(event.boundingBox ? { boundingBox: { ...event.boundingBox } } : {}),
@@ -39,7 +41,7 @@ export function exportEventsJson(events: readonly DetectionEvent[]): string {
 }
 
 const CSV_COLUMNS: ReadonlyArray<keyof SafeEventExport | "boxX" | "boxY" | "boxWidth" | "boxHeight"> = [
-  "id", "timestampIso", "type", "label", "personId", "trackId", "detectorConfidence",
+  "id", "timestampIso", "type", "label", "personId", "trackId", "associatedPersonTrackId", "detectorConfidence",
   "recognitionSimilarity", "boxX", "boxY", "boxWidth", "boxHeight", "mode", "isDemo",
 ];
 

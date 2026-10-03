@@ -4,6 +4,7 @@ import type { DetectionEvent } from "../types/events";
 import type { FaceTemplate, PersonProfile } from "../types/person";
 import type { PersistedVisionSettings, VisionSettings } from "../types/vision";
 import { CURRENT_SCHEMA_VERSION, migrateSettingsRecord } from "./migrations";
+import { normalizePersonId } from "../utils/personId";
 
 export const APP_DATABASE_NAME = "visionid-ai-local";
 
@@ -57,7 +58,7 @@ export class VisionDatabase extends Dexie {
       events: "id,timestamp,type,personId,trackId,isDemo",
       settings: "id",
     });
-    this.version(CURRENT_SCHEMA_VERSION)
+    this.version(2)
       .stores({
         people: "id,&personId,name,role,department,createdAt,lastDetectedAt,isDemo",
         templates: "id,personId,createdAt,modelId,isDemo",
@@ -76,6 +77,22 @@ export class VisionDatabase extends Dexie {
         } else {
           await table.put({ id: "current", ...normalizeVisionSettings(DEFAULT_VISION_SETTINGS) });
         }
+      });
+    this.version(CURRENT_SCHEMA_VERSION)
+      .stores({
+        people: "id,&personId,personIdCanonical,name,role,department,createdAt,lastDetectedAt,isDemo",
+        templates: "id,personId,createdAt,modelId,isDemo",
+        events: "id,timestamp,type,personId,trackId,isDemo",
+        settings: "id",
+      })
+      .upgrade(async (transaction) => {
+        const table = transaction.table("people");
+        const rows = await table.toArray() as Array<Record<string, unknown>>;
+        await Promise.all(rows.map((row) => table.update(String(row.id), {
+          personIdCanonical: typeof row.personId === "string" && row.personId.trim()
+            ? normalizePersonId(row.personId)
+            : `LEGACY-${String(row.id)}`,
+        })));
       });
   }
 }

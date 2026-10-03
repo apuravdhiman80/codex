@@ -1,34 +1,18 @@
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useState } from "react";
 import { NavLink, Outlet } from "react-router";
 import {
-  Activity,
-  Aperture,
-  Camera,
+  Boxes,
   ChevronRight,
-  CircleHelp,
-  LayoutDashboard,
   Menu,
-  ScanFace,
-  Settings2,
-  UsersRound,
   X,
 } from "lucide-react";
-import { getSessionMetrics, subscribeSessionMetrics } from "../features/vision/sessionMetrics";
 
 const navigation = [
-  { label: "Overview", to: "/", icon: LayoutDashboard, end: true },
-  { label: "Vision Console", to: "/console", icon: Camera },
-  { label: "Object Detection", to: "/objects", icon: Aperture },
-  { label: "Enroll Person", to: "/enroll", icon: ScanFace },
-  { label: "People Directory", to: "/people", icon: UsersRound },
-  { label: "Detection History", to: "/history", icon: Activity },
-  { label: "Settings", to: "/settings", icon: Settings2 },
+  { label: "Object Detection", to: "/", icon: Boxes, end: true },
 ];
 
 export function AppShell() {
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
-  const metrics = useSyncExternalStore(subscribeSessionMetrics, getSessionMetrics, getSessionMetrics);
-  useEffect(() => { void import("../features/settings/settingsService").then(({ currentSettings }) => currentSettings()).catch(() => undefined); }, []);
 
   return (
     <div className="vision-shell">
@@ -39,11 +23,11 @@ export function AppShell() {
       <aside className={`sidebar ${mobileNavigationOpen ? "sidebar-open" : ""}`}>
         <div className="brand-lockup">
           <div className="brand-mark" aria-hidden="true">
-            <ScanFace size={21} strokeWidth={1.8} />
+            <Boxes size={21} strokeWidth={1.8} />
           </div>
           <div>
-            <div className="brand-name">VISIONID</div>
-            <div className="brand-edition">AI VISION SYSTEM</div>
+            <div className="brand-name">OBJECT DETECTOR</div>
+            <div className="brand-edition">LOCAL INFERENCE</div>
           </div>
           <button
             className="icon-button sidebar-close"
@@ -69,28 +53,22 @@ export function AppShell() {
             >
               <Icon size={17} strokeWidth={1.8} aria-hidden="true" />
               <span>{label}</span>
-              {label === "Vision Console" && <span className={`nav-live-dot ${metrics.cameraActive ? "nav-live-dot-active" : ""}`} aria-label={metrics.cameraActive ? "Camera active" : "Camera inactive"} />}
             </NavLink>
           ))}
         </nav>
 
         <div className="sidebar-spacer" />
 
-        <section className="privacy-card" aria-label="Privacy mode">
+        <section className="privacy-card" aria-label="Local storage">
           <div className="privacy-card-icon">
-            <ScanFace size={16} aria-hidden="true" />
+            <Boxes size={16} aria-hidden="true" />
           </div>
-          <p className="privacy-card-title">Private by design</p>
+          <p className="privacy-card-title">Processed locally</p>
           <p className="privacy-card-copy">
-            Camera frames and enrolled profiles stay on this device.
+            Camera frames stay on this device and are not stored.
           </p>
         </section>
 
-        <a className="help-link" href="/">
-          <CircleHelp size={16} aria-hidden="true" />
-          <span>Help &amp; guidance</span>
-          <ChevronRight size={14} aria-hidden="true" />
-        </a>
         <div className="sidebar-footer">
           <span className="footer-dot" />
           <span>LOCAL DEVICE</span>
@@ -119,13 +97,13 @@ export function AppShell() {
             <Menu size={19} />
           </button>
           <div className="breadcrumb" aria-label="Page context">
-            <span className="breadcrumb-product">VisionID AI</span>
+            <span className="breadcrumb-product">Object Detector</span>
             <ChevronRight size={14} aria-hidden="true" />
-            <span className="breadcrumb-current">Workspace</span>
+            <span className="breadcrumb-current">Object detection</span>
           </div>
           <div className="topbar-status" role="status">
             <span className="status-pulse" />
-            <span>{metrics.cameraActive ? "CAMERA ACTIVE" : "ENGINE STANDBY"}</span>
+            <span>CAMERA OFF</span>
           </div>
         </header>
 

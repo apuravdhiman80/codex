@@ -20,7 +20,7 @@ export interface RecognitionConfig {
 export type RecognitionDecision =
   | { status: "recognized"; personId: string; similarity: number }
   | { status: "unknown"; reason: "below_threshold"; bestSimilarity: number }
-  | { status: "unknown"; reason: "no_profiles" | "no_compatible_templates" | "invalid_descriptor" | "invalid_config"; bestSimilarity?: undefined }
+  | { status: "unknown"; reason: "no_profiles" | "no_compatible_templates" | "invalid_descriptor" | "invalid_config" | "profile_deleted"; bestSimilarity?: undefined }
   | { status: "ambiguous"; bestSimilarity: number; runnerUpSimilarity: number };
 
 /** Human.match.similarity already returns a normalized 0..1 similarity, not a probability. */
